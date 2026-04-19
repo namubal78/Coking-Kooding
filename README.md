@@ -3,8 +3,8 @@
 개인 포트폴리오 겸 실동작 풀스택 웹 애플리케이션.  
 기존 3개 프로젝트(ESWorld · Flow Task · AAP)의 기능을 하나의 서비스로 통합했습니다.
 
-**프론트엔드 접속:** [namubal78.github.io](https://namubal78.github.io)  
-**백엔드 API:** Render (무료 플랜)
+**프론트엔드:** [namubal78.github.io/Coking-Cooding](https://namubal78.github.io/Coking-Cooding)  
+**백엔드 API:** [coking-cooding-api.onrender.com](https://coking-cooding-api.onrender.com/health)
 
 ---
 
@@ -61,7 +61,7 @@ namubal78.github.io          Render (무료)
 | 항목 | 선택 이유 |
 |---|---|
 | GitHub Pages | namubal78.github.io URL 유지, 프론트 무료 호스팅 |
-| Render | Spring Boot JAR 무료 배포, Dockerfile 없이 Gradle 자동 감지 |
+| Render | Spring Boot Docker 배포, lazy-initialization으로 포트 스캔 타임아웃 해결 |
 | Supabase | PostgreSQL 500MB 무료, Render DB보다 안정적 |
 | GitHub Actions | push 시 자동 빌드·배포, 공개 레포 무제한 무료 |
 
@@ -154,12 +154,25 @@ npm run dev
 
 ---
 
-## 향후 계획
+## 구현 현황 (2026.04.19)
 
-- [ ] Next.js 페이지 UI 구현
-- [ ] Docker / Docker Compose 로컬 환경 구성
+### 완료
+- [x] 백엔드 전체 구현 (Auth · Blog · Planner · Files · Payment)
+- [x] Supabase PostgreSQL 연결 (sslmode=require, 포트 6543 pooler)
+- [x] Render 배포 (lazy-initialization으로 포트 스캔 타임아웃 해결)
+- [x] GitHub Actions CI/CD 파이프라인
+- [x] 메인 랜딩 페이지 (다크 테마, 인디고 포인트 컬러)
+
+### 진행 예정
+- [ ] 로그인 / 회원가입 페이지
+- [ ] 대시보드
+- [ ] 블로그 목록 · 상세 · 작성
+- [ ] 플래너 CRUD UI
+- [ ] 파일 업로드 UI
+- [ ] 결제 UI
+- [ ] Docker Compose 로컬 환경 구성
 - [ ] Kubernetes 배포 구성
-- [ ] Claude API 연동 AI 챗봇 추가
+- [ ] Claude API 연동 AI 챗봇
 - [ ] Slack MCP → Claude Desktop → 자동 CI/CD 파이프라인
 
 ---
