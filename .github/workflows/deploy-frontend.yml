@@ -29,6 +29,7 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          personal_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          external_repository: namubal78/namubal78.github.io
+          publish_branch: main
           publish_dir: frontend/out
-          cname: namubal78.github.io
