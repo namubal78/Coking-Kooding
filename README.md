@@ -1,4 +1,4 @@
-# Coking-Kooding
+# Coking-Cooding
 
 개인 포트폴리오 겸 실동작 풀스택 웹 애플리케이션.  
 기존 3개 프로젝트(ESWorld · Flow Task · AAP)의 기능을 하나의 서비스로 통합했습니다.
@@ -70,14 +70,14 @@ namubal78.github.io          Render (무료)
 ## 프로젝트 구조
 
 ```
-Coking-Kooding/
+Coking-Cooding/
 ├── .github/workflows/
 │   ├── deploy-frontend.yml     # push → Next.js 빌드 → GitHub Pages
 │   └── deploy-backend.yml      # push → Render 배포 트리거
 ├── frontend/                   # Next.js 15 (정적 export)
 │   └── app/
 ├── backend/                    # Spring Boot 3.4
-│   └── src/main/java/com/cookingkooding/
+│   └── src/main/java/com/cookingcooding/
 │       ├── config/             # JWT · Security · CORS
 │       ├── auth/               # 로그인 · 회원가입
 │       ├── blog/               # 포스트 CRUD
