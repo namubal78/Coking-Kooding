@@ -125,8 +125,8 @@ function BlogContent() {
             <div className="flex items-center justify-between text-gray-600 text-sm mb-8 pb-6 border-b border-gray-800">
               <span>{detail.authorNickname} · {new Date(detail.createdAt).toLocaleDateString('ko-KR')}</span>
               <div className="flex gap-4">
-                <button onClick={() => setEditing(true)} className="hover:text-indigo-400 transition-colors">수정</button>
-                <button onClick={() => deletePost(detail.id)} className="hover:text-red-400 transition-colors">삭제</button>
+                <button onClick={() => setEditing(true)} className="hover:text-indigo-400 transition-colors cursor-pointer">수정</button>
+                <button onClick={() => deletePost(detail.id)} className="hover:text-red-400 transition-colors cursor-pointer">삭제</button>
               </div>
             </div>
             <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">{detail.content}</div>
@@ -135,7 +135,7 @@ function BlogContent() {
                 {detail.tags.map(t => <span key={t} className="text-xs text-gray-600">#{t}</span>)}
               </div>
             )}
-            <button onClick={backToList} className="inline-block mt-8 text-sm text-gray-600 hover:text-gray-400 transition-colors">← 목록으로</button>
+            <button onClick={backToList} className="inline-block mt-8 text-sm text-gray-600 hover:text-gray-400 transition-colors cursor-pointer">← 목록으로</button>
           </article>
         )}
       </main>
@@ -154,7 +154,7 @@ function BlogContent() {
           </div>
           <button
             onClick={() => { setCreating(true); setForm(EMPTY_FORM) }}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
           >
             + 새 글 작성
           </button>
@@ -171,7 +171,7 @@ function BlogContent() {
             {posts.map(p => (
               <div key={p.id} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-indigo-500/30 transition-all">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openDetail(p.id)}>
+                  <div className="flex-1 min-w-0 cursor-pointer select-none" onClick={() => openDetail(p.id)}>
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded-full">{p.category}</span>
                       {p.tags?.map(t => <span key={t} className="text-xs text-gray-600">#{t}</span>)}
@@ -180,7 +180,7 @@ function BlogContent() {
                     {p.excerpt && <p className="text-gray-500 text-sm mt-1 line-clamp-2">{p.excerpt}</p>}
                     <p className="text-gray-700 text-xs mt-3">{p.authorNickname} · {new Date(p.createdAt).toLocaleDateString('ko-KR')}</p>
                   </div>
-                  <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0">삭제</button>
+                  <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0 cursor-pointer">삭제</button>
                 </div>
               </div>
             ))}
@@ -224,10 +224,10 @@ function PostForm({ form, setForm, saving, onSave, onCancel }: {
         />
       </div>
       <div className="flex gap-3">
-        <button onClick={onSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+        <button onClick={onSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-semibold transition-colors cursor-pointer">
           {saving ? '저장 중...' : '저장'}
         </button>
-        <button onClick={onCancel} className="text-gray-500 hover:text-gray-300 px-4 py-3 transition-colors">취소</button>
+        <button onClick={onCancel} className="text-gray-500 hover:text-gray-300 px-4 py-3 transition-colors cursor-pointer">취소</button>
       </div>
     </div>
   )

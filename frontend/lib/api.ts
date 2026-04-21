@@ -13,6 +13,15 @@ export function parseJwt(token: string): Record<string, string> | null {
   }
 }
 
+const EMAIL_NAMES: Record<string, string> = {
+  'namubal78@gmail.com': '은새아빠',
+  '1993jhk@gmail.com': '은새엄마',
+}
+
+export function getDisplayName(email: string): string {
+  return EMAIL_NAMES[email] ?? email
+}
+
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getToken()
   const headers: Record<string, string> = {

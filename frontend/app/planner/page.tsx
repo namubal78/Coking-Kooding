@@ -103,12 +103,12 @@ export default function PlannerPage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors"
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
             >
               {saving ? '저장 중...' : editingId ? '수정 완료' : '추가'}
             </button>
             {editingId && (
-              <button type="button" onClick={cancelEdit} className="text-gray-500 hover:text-gray-300 text-sm px-4 transition-colors">취소</button>
+              <button type="button" onClick={cancelEdit} className="text-gray-500 hover:text-gray-300 text-sm px-4 transition-colors cursor-pointer">취소</button>
             )}
           </div>
         </form>
@@ -135,8 +135,8 @@ export default function PlannerPage() {
                   {item.description && <p className="text-gray-500 text-sm">{item.description}</p>}
                 </div>
                 <div className="flex gap-3 shrink-0">
-                  <button onClick={() => startEdit(item)} className="text-sm text-gray-600 hover:text-indigo-400 transition-colors">수정</button>
-                  <button onClick={() => deleteItem(item.id)} className="text-sm text-gray-600 hover:text-red-400 transition-colors">삭제</button>
+                  <button onClick={() => startEdit(item)} className="text-sm text-gray-600 hover:text-indigo-400 transition-colors cursor-pointer">수정</button>
+                  <button onClick={() => deleteItem(item.id)} className="text-sm text-gray-600 hover:text-red-400 transition-colors cursor-pointer">삭제</button>
                 </div>
               </div>
             ))}

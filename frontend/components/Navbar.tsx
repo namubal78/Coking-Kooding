@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { getToken, parseJwt, getDisplayName } from '@/lib/api'
 
 const NAV_LINKS = [
   { href: '/blog', label: '블로그' },
@@ -13,6 +15,14 @@ const NAV_LINKS = [
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
+  const [displayName, setDisplayName] = useState('')
+
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    const payload = parseJwt(token)
+    if (payload?.sub) setDisplayName(getDisplayName(payload.sub))
+  }, [])
 
   function logout() {
     localStorage.removeItem('token')
@@ -35,7 +45,8 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <button onClick={logout} className="text-sm text-gray-600 hover:text-red-400 transition-colors">
+          {displayName && <span className="text-sm text-gray-500">{displayName}</span>}
+          <button onClick={logout} className="text-sm text-gray-600 hover:text-red-400 transition-colors cursor-pointer">
             로그아웃
           </button>
         </div>

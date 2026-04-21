@@ -37,7 +37,7 @@ export default function LoginPage() {
         {!expanded ? (
           <button
             onClick={() => setExpanded(true)}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold transition-colors"
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-semibold transition-colors cursor-pointer"
           >
             🔐 은새네 로그인
           </button>
@@ -45,21 +45,21 @@ export default function LoginPage() {
           <div className="space-y-3">
             <button
               onClick={() => { window.location.href = `${API_URL}/oauth2/authorization/google` }}
-              className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center justify-center gap-3 bg-white text-gray-800 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <GoogleIcon />
               Google로 로그인
             </button>
             <button
               onClick={() => { window.location.href = `${API_URL}/oauth2/authorization/kakao` }}
-              className="w-full flex items-center justify-center gap-3 bg-yellow-400 text-gray-900 py-3 rounded-xl font-semibold hover:bg-yellow-300 transition-colors"
+              className="w-full flex items-center justify-center gap-3 bg-yellow-400 text-gray-900 py-3 rounded-xl font-semibold hover:bg-yellow-300 transition-colors cursor-pointer"
             >
               <KakaoIcon />
               카카오로 로그인
             </button>
             <button
               onClick={() => setExpanded(false)}
-              className="text-sm text-gray-600 hover:text-gray-400 transition-colors"
+              className="text-sm text-gray-600 hover:text-gray-400 transition-colors cursor-pointer"
             >
               취소
             </button>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import { getToken, parseJwt } from '@/lib/api'
+import { getToken, parseJwt, getDisplayName } from '@/lib/api'
 
 const CARDS = [
   { href: '/blog', icon: '✍️', title: '블로그', desc: '게시글 작성 및 관리' },
@@ -21,7 +21,7 @@ export default function DashboardPage() {
     const token = getToken()
     if (!token) { router.replace('/login'); return }
     const payload = parseJwt(token)
-    if (payload?.sub) setEmail(payload.sub)
+    if (payload?.sub) setEmail(getDisplayName(payload.sub))
   }, [router])
 
   return (

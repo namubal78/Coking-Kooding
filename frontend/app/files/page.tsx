@@ -99,7 +99,7 @@ export default function FilesPage() {
             <button
               onClick={() => fileInput.current?.click()}
               disabled={uploading}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
             >
               {uploading ? '업로드 중...' : '파일 선택'}
             </button>
@@ -133,7 +133,7 @@ export default function FilesPage() {
                       </a>
                       <p className="text-xs text-gray-600 mt-0.5">{formatSize(f.fileSize)} · {new Date(f.uploadedAt).toLocaleDateString('ko-KR')}</p>
                     </div>
-                    <button onClick={() => deleteFile(f.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0">삭제</button>
+                    <button onClick={() => deleteFile(f.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0 cursor-pointer">삭제</button>
                   </div>
                 ))}
               </div>
@@ -150,14 +150,14 @@ export default function FilesPage() {
                 value={newExt}
                 onChange={e => setNewExt(e.target.value)}
               />
-              <button type="submit" className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">추가</button>
+              <button type="submit" className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer">추가</button>
             </form>
             <div className="space-y-1.5">
               {blocked.map(b => (
                 <div key={b.extension} className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-lg px-3 py-2">
                   <span className="text-sm text-gray-300">.{b.extension}</span>
                   {!b.isFixed && (
-                    <button onClick={() => removeExt(b.extension)} className="text-gray-700 hover:text-red-400 text-xs transition-colors">삭제</button>
+                    <button onClick={() => removeExt(b.extension)} className="text-gray-700 hover:text-red-400 text-xs transition-colors cursor-pointer">삭제</button>
                   )}
                 </div>
               ))}
