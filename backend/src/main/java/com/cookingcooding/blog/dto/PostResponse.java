@@ -4,6 +4,8 @@ import com.cookingcooding.blog.entity.Post;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 @Getter
 public class PostResponse {
@@ -12,7 +14,7 @@ public class PostResponse {
     private final String category;
     private final String content;
     private final String excerpt;
-    private final String tags;
+    private final List<String> tags;
     private final String authorNickname;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
@@ -23,7 +25,9 @@ public class PostResponse {
         this.category = post.getCategory();
         this.content = post.getContent();
         this.excerpt = post.getExcerpt();
-        this.tags = post.getTags();
+        this.tags = post.getTags() != null && !post.getTags().isBlank()
+                ? Arrays.stream(post.getTags().split(",")).map(String::trim).filter(s -> !s.isBlank()).toList()
+                : List.of();
         this.authorNickname = post.getAuthor().getNickname();
         this.createdAt = post.getCreatedAt();
         this.updatedAt = post.getUpdatedAt();

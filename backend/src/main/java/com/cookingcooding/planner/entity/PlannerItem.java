@@ -1,6 +1,7 @@
 package com.cookingcooding.planner.entity;
 
 import com.cookingcooding.auth.entity.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +21,7 @@ public class PlannerItem {
     @Column(nullable = false)
     private String date;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

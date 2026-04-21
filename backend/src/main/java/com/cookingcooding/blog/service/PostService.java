@@ -40,7 +40,7 @@ public class PostService {
                 .category(req.getCategory())
                 .content(req.getContent())
                 .excerpt(req.getExcerpt())
-                .tags(req.getTags())
+                .tags(req.getTags() != null ? String.join(",", req.getTags()) : null)
                 .author(author)
                 .build();
         return new PostResponse(postRepository.save(post));
@@ -52,7 +52,7 @@ public class PostService {
         post.setCategory(req.getCategory());
         post.setContent(req.getContent());
         post.setExcerpt(req.getExcerpt());
-        post.setTags(req.getTags());
+        post.setTags(req.getTags() != null ? String.join(",", req.getTags()) : null);
         return new PostResponse(postRepository.save(post));
     }
 
