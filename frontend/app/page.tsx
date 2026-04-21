@@ -14,15 +14,9 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="text-sm text-gray-300 hover:text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-            >
-              로그인
-            </Link>
-            <Link
-              href="/register"
               className="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              회원가입
+              은새네 로그인
             </Link>
           </div>
         </div>

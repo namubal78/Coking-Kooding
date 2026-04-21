@@ -14,7 +14,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @Column(nullable = false)
@@ -24,5 +24,10 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Provider provider;
+
     public enum Role { USER, ADMIN }
+    public enum Provider { LOCAL, GOOGLE, KAKAO }
 }

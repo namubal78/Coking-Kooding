@@ -1,5 +1,8 @@
 package com.cookingcooding.config;
 
+import com.cookingcooding.auth.oauth.CustomOAuth2UserService;
+import com.cookingcooding.auth.oauth.OAuthFailureHandler;
+import com.cookingcooding.auth.oauth.OAuthSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +28,9 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuthSuccessHandler oAuthSuccessHandler;
+    private final OAuthFailureHandler oAuthFailureHandler;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -38,9 +44,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers("/api/blog/posts").permitAll()
                 .requestMatchers("/api/blog/posts/{id}").permitAll()
                 .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(ui -> ui.userService(customOAuth2UserService))
+                .successHandler(oAuthSuccessHandler)
+                .failureHandler(oAuthFailureHandler)
             )
             .addFilterBefore(new JwtFilter(jwtUtil, userDetailsService),
                     UsernamePasswordAuthenticationFilter.class);

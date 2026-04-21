@@ -36,6 +36,7 @@ public class AuthService implements UserDetailsService {
                 .password(passwordEncoder.encode(req.getPassword()))
                 .nickname(req.getNickname())
                 .role(User.Role.USER)
+                .provider(User.Provider.LOCAL)
                 .build());
     }
 
@@ -45,7 +46,7 @@ public class AuthService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
-                .password(user.getPassword())
+                .password(user.getPassword() != null ? user.getPassword() : "")
                 .roles(user.getRole().name())
                 .build();
     }
