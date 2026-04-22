@@ -37,11 +37,14 @@ export default function DemoChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: [...messages, userMsg] }),
       })
-      if (!res.ok) throw new Error(`${res.status}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || `오류 ${res.status}`)
+      }
       const data = await res.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.content }])
-    } catch {
-      setError('응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
       setLoading(false)
     }
