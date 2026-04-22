@@ -12,7 +12,7 @@ export default function AuthCallbackPage() {
 
     if (token) {
       localStorage.setItem('token', token)
-      router.replace('/dashboard')
+      router.replace('/world/dashboard')
     } else {
       router.replace('/login?error=oauth_failed')
     }

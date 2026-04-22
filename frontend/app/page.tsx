@@ -1,5 +1,4 @@
-import Image from "next/image";
-import Link from "next/link";
+import Link from 'next/link'
 
 export default function Home() {
   return (
@@ -11,11 +10,10 @@ export default function Home() {
           <Link href="/" className="text-xl font-bold tracking-tight text-white hover:text-indigo-400 transition-colors">
             Coking<span className="text-indigo-400">Cooding</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-colors"
-            >
+          <div className="flex items-center gap-5">
+            <Link href="/blog" className="text-sm text-gray-400 hover:text-white transition-colors">블로그</Link>
+            <Link href="/portfolio" className="text-sm text-gray-400 hover:text-white transition-colors">포트폴리오</Link>
+            <Link href="/login" className="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors">
               은새네 로그인
             </Link>
           </div>
@@ -23,52 +21,55 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-16">
-        <div className="max-w-4xl w-full text-center space-y-6">
-          <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase">All-in-One Platform</p>
+      <section className="flex-1 flex flex-col items-center justify-center px-6 pt-32 pb-16">
+        <div className="max-w-2xl w-full text-center space-y-4">
+          <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase">Blog · Portfolio · Family</p>
           <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-            업무의 모든 것을<br />
-            <span className="text-indigo-400">한 곳에서</span>
+            Coking<span className="text-indigo-400">Cooding</span>
           </h1>
-          <p className="text-gray-400 text-lg max-w-xl mx-auto">
-            플래너, 파일 관리, 결제, 블로그까지 — 하나의 플랫폼으로 경험하세요.
+          <p className="text-gray-400 text-lg">
+            배우고 기록하고 만드는 공간
           </p>
-
-          {/* main.png — 클릭 시 대시보드로 이동 */}
-          <Link href="/dashboard" className="block group mt-8">
-            <div className="relative rounded-2xl overflow-hidden border border-gray-800 shadow-2xl shadow-indigo-900/20 hover:border-indigo-500/50 transition-all duration-300 hover:shadow-indigo-500/20">
-              <Image
-                src="/main.png"
-                alt="Coking Cooding 메인"
-                width={1200}
-                height={675}
-                className="w-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-950/60 to-transparent flex items-end justify-center pb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="bg-indigo-600 text-white px-6 py-3 rounded-full text-sm font-semibold">
-                  시작하기 →
-                </span>
-              </div>
-            </div>
-          </Link>
         </div>
       </section>
 
-      {/* Features */}
+      {/* 3 Sections */}
       <section className="max-w-6xl mx-auto px-6 pb-24 w-full">
-        <h2 className="text-center text-2xl font-bold mb-10 text-gray-200">제공 서비스</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          {features.map((f) => (
-            <div
-              key={f.title}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-indigo-500/40 hover:bg-gray-900/80 transition-all duration-200 group"
-            >
-              <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="font-semibold text-white mb-2 group-hover:text-indigo-400 transition-colors">{f.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          {/* 블로그 */}
+          <Link href="/blog" className="group bg-gray-900 border border-gray-800 rounded-2xl p-8 hover:border-indigo-500/40 transition-all duration-200 flex flex-col">
+            <div className="text-4xl mb-4">✍️</div>
+            <h2 className="text-xl font-bold mb-2 group-hover:text-indigo-400 transition-colors">블로그</h2>
+            <p className="text-gray-500 text-sm leading-relaxed flex-1">
+              학습 기록과 트러블슈팅을 남기는 기술 블로그.
+              코킹쿠딩 개발 과정을 실시간으로 기록합니다.
+            </p>
+            <span className="mt-6 text-indigo-400 text-sm group-hover:translate-x-1 transition-transform inline-block">글 보러 가기 →</span>
+          </Link>
+
+          {/* 포트폴리오 */}
+          <Link href="/portfolio" className="group bg-gray-900 border border-gray-800 rounded-2xl p-8 hover:border-indigo-500/40 transition-all duration-200 flex flex-col">
+            <div className="text-4xl mb-4">🗂️</div>
+            <h2 className="text-xl font-bold mb-2 group-hover:text-indigo-400 transition-colors">포트폴리오</h2>
+            <p className="text-gray-500 text-sm leading-relaxed flex-1">
+              실무 프로젝트와 사이드 프로젝트 소개.
+              구현된 기능을 직접 체험하고 코드를 확인할 수 있습니다.
+            </p>
+            <span className="mt-6 text-indigo-400 text-sm group-hover:translate-x-1 transition-transform inline-block">프로젝트 보러 가기 →</span>
+          </Link>
+
+          {/* 은새월드 */}
+          <Link href="/login" className="group bg-gray-900 border border-gray-800 rounded-2xl p-8 hover:border-indigo-500/40 transition-all duration-200 flex flex-col">
+            <div className="text-4xl mb-4">🏠</div>
+            <h2 className="text-xl font-bold mb-2 group-hover:text-indigo-400 transition-colors">은새월드</h2>
+            <p className="text-gray-500 text-sm leading-relaxed flex-1">
+              가족 전용 공간. 플래너, 파일 관리, 결제 내역 등
+              로그인 후 이용할 수 있습니다.
+            </p>
+            <span className="mt-6 text-indigo-400 text-sm group-hover:translate-x-1 transition-transform inline-block">은새네 로그인 →</span>
+          </Link>
+
         </div>
       </section>
 
@@ -77,28 +78,5 @@ export default function Home() {
         © 2026 CokingCooding · Built with Next.js & Spring Boot
       </footer>
     </div>
-  );
+  )
 }
-
-const features = [
-  {
-    icon: "🗓️",
-    title: "플래너",
-    desc: "일정과 업무를 체계적으로 관리하세요. JWT 기반 인증으로 안전하게 보호됩니다.",
-  },
-  {
-    icon: "📁",
-    title: "파일 관리",
-    desc: "파일 업로드 및 확장자 제어. 허용되지 않은 파일 형식은 자동으로 차단됩니다.",
-  },
-  {
-    icon: "💳",
-    title: "결제",
-    desc: "포트원 연동 결제 검증. 안전하고 신뢰할 수 있는 결제 시스템을 제공합니다.",
-  },
-  {
-    icon: "✍️",
-    title: "블로그",
-    desc: "게시글 작성, 수정, 삭제. 인증된 사용자만 콘텐츠를 관리할 수 있습니다.",
-  },
-];

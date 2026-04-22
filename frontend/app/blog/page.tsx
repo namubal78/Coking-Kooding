@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { getToken, apiFetch } from '@/lib/api'
 
@@ -39,11 +38,12 @@ function BlogContent() {
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    if (!getToken()) { router.replace('/login'); return }
+    setIsLoggedIn(!!getToken())
     apiFetch('/api/blog/posts').then(r => r.json()).then(setPosts).finally(() => setLoading(false))
-  }, [router])
+  }, [])
 
   useEffect(() => {
     if (!postId) { setDetail(null); return }
@@ -97,7 +97,6 @@ function BlogContent() {
     backToList()
   }
 
-  // 새 글 작성 폼
   if (creating) return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
@@ -108,7 +107,6 @@ function BlogContent() {
     </div>
   )
 
-  // 상세 보기
   if (detail) return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
@@ -124,10 +122,12 @@ function BlogContent() {
             <h1 className="text-3xl font-bold mt-3 mb-2">{detail.title}</h1>
             <div className="flex items-center justify-between text-gray-600 text-sm mb-8 pb-6 border-b border-gray-800">
               <span>{detail.authorNickname} · {new Date(detail.createdAt).toLocaleDateString('ko-KR')}</span>
-              <div className="flex gap-4">
-                <button onClick={() => setEditing(true)} className="hover:text-indigo-400 transition-colors cursor-pointer">수정</button>
-                <button onClick={() => deletePost(detail.id)} className="hover:text-red-400 transition-colors cursor-pointer">삭제</button>
-              </div>
+              {isLoggedIn && (
+                <div className="flex gap-4">
+                  <button onClick={() => setEditing(true)} className="hover:text-indigo-400 transition-colors cursor-pointer">수정</button>
+                  <button onClick={() => deletePost(detail.id)} className="hover:text-red-400 transition-colors cursor-pointer">삭제</button>
+                </div>
+              )}
             </div>
             <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">{detail.content}</div>
             {detail.tags?.length > 0 && (
@@ -142,7 +142,6 @@ function BlogContent() {
     </div>
   )
 
-  // 목록
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
@@ -152,12 +151,14 @@ function BlogContent() {
             <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Blog</p>
             <h1 className="text-3xl font-bold">블로그</h1>
           </div>
-          <button
-            onClick={() => { setCreating(true); setForm(EMPTY_FORM) }}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
-          >
-            + 새 글 작성
-          </button>
+          {isLoggedIn && (
+            <button
+              onClick={() => { setCreating(true); setForm(EMPTY_FORM) }}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+            >
+              + 새 글 작성
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -180,7 +181,9 @@ function BlogContent() {
                     {p.excerpt && <p className="text-gray-500 text-sm mt-1 line-clamp-2">{p.excerpt}</p>}
                     <p className="text-gray-700 text-xs mt-3">{p.authorNickname} · {new Date(p.createdAt).toLocaleDateString('ko-KR')}</p>
                   </div>
-                  <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0 cursor-pointer">삭제</button>
+                  {isLoggedIn && (
+                    <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0 cursor-pointer">삭제</button>
+                  )}
                 </div>
               </div>
             ))}
