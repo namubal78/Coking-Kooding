@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -28,12 +29,14 @@ public class PhotoService {
     @Value("${supabase.bucket:photos}")
     private String bucket;
 
+    private static final int SIGNED_URL_EXPIRES = 3600; // 1시간
+
     private final PhotoRepository photoRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public List<PhotoResponse> getAll() {
         return photoRepository.findAllByOrderByUploadedAtDesc().stream()
-                .map(PhotoResponse::from)
+                .map(p -> PhotoResponse.of(p, getSignedUrl(p.getStoragePath())))
                 .toList();
     }
 
@@ -49,20 +52,17 @@ public class PhotoService {
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream"
         ));
 
-        HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
-        restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
-
-        String publicUrl = supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + storagePath;
+        restTemplate.exchange(uploadUrl, HttpMethod.POST, new HttpEntity<>(file.getBytes(), headers), String.class);
 
         Photo photo = Photo.builder()
                 .fileName(file.getOriginalFilename())
-                .publicUrl(publicUrl)
                 .storagePath(storagePath)
                 .uploadedBy(uploaderEmail)
                 .uploadedAt(LocalDateTime.now())
                 .build();
 
-        return PhotoResponse.from(photoRepository.save(photo));
+        Photo saved = photoRepository.save(photo);
+        return PhotoResponse.of(saved, getSignedUrl(storagePath));
     }
 
     public void delete(Long id) {
@@ -75,6 +75,23 @@ public class PhotoService {
         restTemplate.exchange(deleteUrl, HttpMethod.DELETE, new HttpEntity<>(headers), String.class);
 
         photoRepository.delete(photo);
+    }
+
+    private String getSignedUrl(String storagePath) {
+        String signUrl = supabaseUrl + "/storage/v1/object/sign/" + bucket + "/" + storagePath;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + serviceKey);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Integer> body = Map.of("expiresIn", SIGNED_URL_EXPIRES);
+        HttpEntity<Map<String, Integer>> entity = new HttpEntity<>(body, headers);
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> result = restTemplate.postForObject(signUrl, entity, Map.class);
+
+        if (result == null || result.get("signedURL") == null) return "";
+        return supabaseUrl + result.get("signedURL");
     }
 
     private String getExtension(String filename) {

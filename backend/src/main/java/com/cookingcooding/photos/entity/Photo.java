@@ -21,9 +21,6 @@ public class Photo {
     @Column(nullable = false)
     private String fileName;
 
-    @Column(nullable = false, length = 1000)
-    private String publicUrl;
-
     @Column(nullable = false)
     private String storagePath;
 
