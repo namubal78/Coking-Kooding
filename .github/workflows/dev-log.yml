@@ -1,9 +1,7 @@
 name: Dev Log
 
 on:
-  workflow_run:
-    workflows: ["Deploy Backend to Render"]
-    types: [completed]
+  push:
     branches: [main]
 
 jobs:
@@ -15,7 +13,7 @@ jobs:
           fetch-depth: 2
 
       - name: Wait for Render to be ready
-        run: sleep 30
+        run: sleep 420
 
       - name: Send commit to dev log
         run: |
