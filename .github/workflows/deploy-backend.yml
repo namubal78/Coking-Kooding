@@ -3,6 +3,7 @@ name: Deploy Backend to Render
 on:
   push:
     branches: [main]
+    paths: [backend/**]
 
 jobs:
   build-and-push:
