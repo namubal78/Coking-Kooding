@@ -64,3 +64,11 @@ family:
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:3000}
+
+anthropic:
+  api-key: ${ANTHROPIC_API_KEY:}
+
+supabase:
+  url: ${SUPABASE_URL:}
+  service-key: ${SUPABASE_SERVICE_KEY:}
+  bucket: ${SUPABASE_BUCKET:photos}

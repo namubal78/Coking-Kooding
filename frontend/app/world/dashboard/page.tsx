@@ -7,9 +7,9 @@ import { parseJwt, getDisplayName, getToken } from '@/lib/api'
 
 const CARDS = [
   { href: '/world/planner', icon: '🗓️', title: '플래너', desc: '일정 및 업무 관리' },
-  { href: '/world/files', icon: '📁', title: '파일 관리', desc: '파일 업로드 및 확장자 제어' },
-  { href: '/world/payments', icon: '💳', title: '결제', desc: '결제 내역 확인' },
+  { href: '/world/photos', icon: '📸', title: '사진 앨범', desc: '가족 사진 모아보기' },
   { href: '/blog', icon: '✍️', title: '블로그', desc: '게시글 작성 및 관리' },
+  { href: '/demo', icon: '🔧', title: '기능 데모', desc: '파일 · 결제 · AI 챗봇' },
 ]
 
 export default function DashboardPage() {

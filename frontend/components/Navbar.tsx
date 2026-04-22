@@ -8,12 +8,13 @@ import { getToken, parseJwt, getDisplayName } from '@/lib/api'
 const PUBLIC_LINKS = [
   { href: '/blog', label: '블로그' },
   { href: '/portfolio', label: '포트폴리오' },
+  { href: '/demo', label: '데모' },
 ]
 
 const WORLD_LINKS = [
+  { href: '/world/dashboard', label: '홈' },
   { href: '/world/planner', label: '플래너' },
-  { href: '/world/files', label: '파일' },
-  { href: '/world/payments', label: '결제' },
+  { href: '/world/photos', label: '앨범' },
 ]
 
 export default function Navbar() {

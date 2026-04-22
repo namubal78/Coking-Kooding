@@ -4,6 +4,6 @@ import { useRouter } from 'next/navigation'
 
 export default function PaymentsRedirect() {
   const router = useRouter()
-  useEffect(() => { router.replace('/world/payments') }, [router])
+  useEffect(() => { router.replace('/demo/payments') }, [router])
   return null
 }

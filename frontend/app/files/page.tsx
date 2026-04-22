@@ -4,6 +4,6 @@ import { useRouter } from 'next/navigation'
 
 export default function FilesRedirect() {
   const router = useRouter()
-  useEffect(() => { router.replace('/world/files') }, [router])
+  useEffect(() => { router.replace('/demo/files') }, [router])
   return null
 }

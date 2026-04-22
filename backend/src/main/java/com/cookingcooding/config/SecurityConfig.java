@@ -47,6 +47,9 @@ public class SecurityConfig {
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers("/api/blog/posts").permitAll()
                 .requestMatchers("/api/blog/posts/{id}").permitAll()
+                .requestMatchers("/api/chat").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/files", "/api/files/extensions").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/payments").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
