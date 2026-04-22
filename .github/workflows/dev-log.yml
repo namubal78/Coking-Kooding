@@ -12,8 +12,20 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Wait for Render to be ready
-        run: sleep 420
+      - name: Wait for Render deploy to complete
+        run: |
+          echo "Polling Render deployment status..."
+          for i in $(seq 1 20); do
+            STATUS=$(curl -s -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+              "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys?limit=1" \
+              | jq -r '.[0].deploy.status')
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "live" ]; then
+              echo "Deploy complete."
+              break
+            fi
+            sleep 30
+          done
 
       - name: Send commit to dev log
         run: |
