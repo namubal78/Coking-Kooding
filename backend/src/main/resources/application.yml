@@ -77,3 +77,6 @@ supabase:
   url: ${SUPABASE_URL:}
   service-key: ${SUPABASE_SERVICE_KEY:}
   bucket: ${SUPABASE_BUCKET:photos}
+
+webhook:
+  secret: ${WEBHOOK_SECRET:}

@@ -1,0 +1,26 @@
+name: Dev Log
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Send commit to dev log
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
+          AUTHOR=$(git log -1 --pretty=%an)
+          SHA=$(git log -1 --pretty=%H | cut -c1-7)
+          TIMESTAMP=$(git log -1 --pretty=%cI)
+          FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | head -20 | jq -Rs 'split("\n") | map(select(length > 0))')
+
+          curl -s -X POST "${{ secrets.API_URL }}/api/dev-logs/webhook" \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}" \
+            -d "{\"commitMessage\":$(echo "$COMMIT_MSG" | jq -Rs .),\"author\":$(echo "$AUTHOR" | jq -Rs .),\"sha\":$(echo "$SHA" | jq -Rs .),\"changedFiles\":$FILES,\"timestamp\":$(echo "$TIMESTAMP" | jq -Rs .)}"
