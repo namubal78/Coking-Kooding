@@ -32,6 +32,11 @@ spring:
       max-lifetime: 1800000
       keepalive-time: 60000
       connection-test-query: SELECT 1
+      connection-timeout: 60000
+      initialization-fail-timeout: 180000
+      data-source-properties:
+        connectTimeout: 60
+        socketTimeout: 60
   jpa:
     hibernate:
       ddl-auto: update
