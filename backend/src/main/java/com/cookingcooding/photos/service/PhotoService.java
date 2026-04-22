@@ -52,7 +52,11 @@ public class PhotoService {
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream"
         ));
 
-        restTemplate.exchange(uploadUrl, HttpMethod.POST, new HttpEntity<>(file.getBytes(), headers), String.class);
+        try {
+            restTemplate.exchange(uploadUrl, HttpMethod.POST, new HttpEntity<>(file.getBytes(), headers), String.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Supabase upload failed: " + e.getMessage() + " | url=" + uploadUrl, e);
+        }
 
         Photo photo = Photo.builder()
                 .fileName(file.getOriginalFilename())
