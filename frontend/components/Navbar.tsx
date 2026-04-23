@@ -42,12 +42,18 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link
-          href={loggedIn ? '/world/dashboard' : '/'}
-          className="text-xl font-bold tracking-tight text-white hover:text-indigo-400 transition-colors"
-        >
-          Coking<span className="text-indigo-400">Cooding</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/about" className="text-sm font-mono text-gray-400 hover:text-indigo-400 transition-colors">
+            namubal78
+          </Link>
+          <span className="text-gray-700">·</span>
+          <Link
+            href={loggedIn ? '/world/dashboard' : '/'}
+            className="text-xl font-bold tracking-tight text-white hover:text-indigo-400 transition-colors"
+          >
+            Coking<span className="text-indigo-400">Cooding</span>
+          </Link>
+        </div>
 
         <div className="flex items-center gap-5">
           {PUBLIC_LINKS.map((l) => (
