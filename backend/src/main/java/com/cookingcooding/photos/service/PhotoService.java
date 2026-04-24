@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -29,14 +28,12 @@ public class PhotoService {
     @Value("${supabase.bucket:photos}")
     private String bucket;
 
-    private static final int SIGNED_URL_EXPIRES = 3600; // 1시간
-
     private final PhotoRepository photoRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
     public List<PhotoResponse> getAll() {
         return photoRepository.findAllByOrderByUploadedAtDesc().stream()
-                .map(p -> PhotoResponse.of(p, getSignedUrl(p.getStoragePath())))
+                .map(p -> PhotoResponse.of(p, getPublicUrl(p.getStoragePath())))
                 .toList();
     }
 
@@ -67,7 +64,7 @@ public class PhotoService {
                 .build();
 
         Photo saved = photoRepository.save(photo);
-        return PhotoResponse.of(saved, getSignedUrl(storagePath));
+        return PhotoResponse.of(saved, getPublicUrl(storagePath));
     }
 
     public long getStorageUsed() {
@@ -87,33 +84,9 @@ public class PhotoService {
         photoRepository.delete(photo);
     }
 
-    private String getSignedUrl(String storagePath) {
+    private String getPublicUrl(String storagePath) {
         if (supabaseUrl == null || supabaseUrl.isEmpty()) return "";
-
-        String signUrl = supabaseUrl + "/storage/v1/object/sign/" + bucket + "/" + storagePath;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + serviceKey);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, Integer> body = Map.of("expiresIn", SIGNED_URL_EXPIRES);
-        HttpEntity<Map<String, Integer>> entity = new HttpEntity<>(body, headers);
-
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> result = restTemplate.postForObject(signUrl, entity, Map.class);
-            if (result == null) return "";
-
-            // Supabase 버전에 따라 "signedURL" 또는 "signedUrl" 반환
-            Object signed = result.getOrDefault("signedURL", result.get("signedUrl"));
-            if (signed == null) return "";
-
-            String signedStr = signed.toString();
-            // 이미 절대 URL이면 그대로, 상대 경로면 앞에 baseUrl 붙임
-            return signedStr.startsWith("http") ? signedStr : supabaseUrl + signedStr;
-        } catch (Exception e) {
-            return "";
-        }
+        return supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + storagePath;
     }
 
     private String getExtension(String filename) {
