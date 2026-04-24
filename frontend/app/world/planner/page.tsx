@@ -32,6 +32,12 @@ export default function PlannerPage() {
     return { year: d.getFullYear(), month: d.getMonth() }
   })
   const [view, setView] = useState<'month' | 'week'>('month')
+  const [weekStart, setWeekStart] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - d.getDay())
+    d.setHours(0, 0, 0, 0)
+    return d
+  })
   const [sidebar, setSidebar] = useState<'detail' | 'new' | null>(null)
   const [selected, setSelected] = useState<Item | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -43,25 +49,35 @@ export default function PlannerPage() {
   }, [])
 
   function prevPeriod() {
-    setCursor(c => {
-      if (view === 'month') {
+    if (view === 'month') {
+      setCursor(c => {
         const m = c.month === 0 ? 11 : c.month - 1
         const y = c.month === 0 ? c.year - 1 : c.year
         return { year: y, month: m }
-      }
-      return c
-    })
+      })
+    } else {
+      setWeekStart(w => {
+        const d = new Date(w)
+        d.setDate(d.getDate() - 7)
+        return d
+      })
+    }
   }
 
   function nextPeriod() {
-    setCursor(c => {
-      if (view === 'month') {
+    if (view === 'month') {
+      setCursor(c => {
         const m = c.month === 11 ? 0 : c.month + 1
         const y = c.month === 11 ? c.year + 1 : c.year
         return { year: y, month: m }
-      }
-      return c
-    })
+      })
+    } else {
+      setWeekStart(w => {
+        const d = new Date(w)
+        d.setDate(d.getDate() + 7)
+        return d
+      })
+    }
   }
 
   function openNew(date: string) {
@@ -139,7 +155,17 @@ export default function PlannerPage() {
     return acc
   }, {})
 
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart)
+    d.setDate(weekStart.getDate() + i)
+    return d
+  })
+
   const monthLabel = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long' }).format(new Date(cursor.year, cursor.month, 1))
+  const fmtDay = (d: Date) => new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric' }).format(d)
+  const periodLabel = view === 'week'
+    ? `${fmtDay(weekDays[0])} ~ ${fmtDay(weekDays[6])}`
+    : monthLabel
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
@@ -149,10 +175,18 @@ export default function PlannerPage() {
         <div className="flex items-center justify-between py-4 px-2">
           <div className="flex items-center gap-3">
             <button onClick={prevPeriod} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-800 transition-colors cursor-pointer text-gray-400">‹</button>
-            <h2 className="text-lg font-bold min-w-[140px] text-center">{monthLabel}</h2>
+            <h2 className="text-lg font-bold min-w-[160px] text-center">{periodLabel}</h2>
             <button onClick={nextPeriod} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-800 transition-colors cursor-pointer text-gray-400">›</button>
             <button
-              onClick={() => setCursor({ year: today.getFullYear(), month: today.getMonth() })}
+              onClick={() => {
+                setCursor({ year: today.getFullYear(), month: today.getMonth() })
+                setWeekStart(() => {
+                  const d = new Date(today)
+                  d.setDate(d.getDate() - d.getDay())
+                  d.setHours(0, 0, 0, 0)
+                  return d
+                })
+              }}
               className="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 border border-indigo-800 rounded-md transition-colors cursor-pointer ml-1"
             >
               오늘
@@ -176,59 +210,97 @@ export default function PlannerPage() {
         <div className="flex flex-1 gap-4 min-h-0">
           {/* Calendar */}
           <div className="flex-1 min-w-0 flex flex-col">
-            {/* Weekday headers */}
-            <div className="grid grid-cols-7 border-l border-t border-gray-800">
-              {WEEKDAYS.map((d, i) => (
-                <div key={d} className={`border-r border-b border-gray-800 py-2 text-center text-xs font-semibold ${i === 0 ? 'text-rose-400' : i === 6 ? 'text-sky-400' : 'text-gray-500'}`}>
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Day cells */}
             {loading ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : (
-              <div className="grid grid-cols-7 flex-1 border-l border-gray-800">
-                {cells.map((day, i) => {
-                  const key = day ? dateKey(day) : `empty-${i}`
-                  const dayItems = day ? (itemsByDate[dateKey(day)] ?? []) : []
-                  const isWeekend = i % 7 === 0 || i % 7 === 6
-                  return (
-                    <div
-                      key={key}
-                      className={`border-r border-b border-gray-800 min-h-[90px] flex flex-col p-1 transition-colors ${day ? 'hover:bg-gray-900/50 cursor-pointer' : 'bg-gray-950/30'}`}
-                      onClick={() => day && openNew(dateKey(day))}
-                    >
-                      {day && (
-                        <>
-                          <span className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full self-end
-                            ${isToday(day) ? 'bg-indigo-600 text-white' : isWeekend ? (i % 7 === 0 ? 'text-rose-400' : 'text-sky-400') : 'text-gray-400'}`}
-                          >
-                            {day.getDate()}
-                          </span>
-                          <div className="flex flex-col gap-0.5">
-                            {dayItems.slice(0, 3).map(item => (
-                              <button
-                                key={item.id}
-                                onClick={e => { e.stopPropagation(); openDetail(item) }}
-                                className={`${eventColor(item.id)} text-white text-[10px] font-medium px-1.5 py-0.5 rounded truncate text-left w-full hover:opacity-80 transition-opacity cursor-pointer`}
-                              >
-                                {item.title}
-                              </button>
-                            ))}
-                            {dayItems.length > 3 && (
-                              <span className="text-[10px] text-gray-500 pl-1">+{dayItems.length - 3}개</span>
-                            )}
-                          </div>
-                        </>
-                      )}
+            ) : view === 'week' ? (
+              /* 주간 뷰 */
+              <div className="flex-1 flex flex-col border-l border-t border-gray-800">
+                <div className="grid grid-cols-7">
+                  {weekDays.map((day, i) => (
+                    <div key={i} className={`border-r border-b border-gray-800 py-2 text-center ${i === 0 ? 'text-rose-400' : i === 6 ? 'text-sky-400' : 'text-gray-500'}`}>
+                      <div className="text-xs font-semibold">{WEEKDAYS[i]}</div>
+                      <span className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-full mx-auto mt-0.5 ${isToday(day) ? 'bg-indigo-600 text-white' : ''}`}>
+                        {day.getDate()}
+                      </span>
                     </div>
-                  )
-                })}
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 flex-1">
+                  {weekDays.map((day, i) => {
+                    const dayItems = itemsByDate[dateKey(day)] ?? []
+                    return (
+                      <div
+                        key={i}
+                        className="border-r border-b border-gray-800 min-h-[200px] flex flex-col p-2 hover:bg-gray-900/50 cursor-pointer transition-colors"
+                        onClick={() => openNew(dateKey(day))}
+                      >
+                        <div className="flex flex-col gap-1">
+                          {dayItems.map(item => (
+                            <button
+                              key={item.id}
+                              onClick={e => { e.stopPropagation(); openDetail(item) }}
+                              className={`${eventColor(item.id)} text-white text-xs font-medium px-2 py-1 rounded truncate text-left w-full hover:opacity-80 transition-opacity cursor-pointer`}
+                            >
+                              {item.title}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
+            ) : (
+              /* 월간 뷰 */
+              <>
+                <div className="grid grid-cols-7 border-l border-t border-gray-800">
+                  {WEEKDAYS.map((d, i) => (
+                    <div key={d} className={`border-r border-b border-gray-800 py-2 text-center text-xs font-semibold ${i === 0 ? 'text-rose-400' : i === 6 ? 'text-sky-400' : 'text-gray-500'}`}>
+                      {d}
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 flex-1 border-l border-gray-800">
+                  {cells.map((day, i) => {
+                    const key = day ? dateKey(day) : `empty-${i}`
+                    const dayItems = day ? (itemsByDate[dateKey(day)] ?? []) : []
+                    const isWeekend = i % 7 === 0 || i % 7 === 6
+                    return (
+                      <div
+                        key={key}
+                        className={`border-r border-b border-gray-800 min-h-[90px] flex flex-col p-1 transition-colors ${day ? 'hover:bg-gray-900/50 cursor-pointer' : 'bg-gray-950/30'}`}
+                        onClick={() => day && openNew(dateKey(day))}
+                      >
+                        {day && (
+                          <>
+                            <span className={`text-xs font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full self-end
+                              ${isToday(day) ? 'bg-indigo-600 text-white' : isWeekend ? (i % 7 === 0 ? 'text-rose-400' : 'text-sky-400') : 'text-gray-400'}`}
+                            >
+                              {day.getDate()}
+                            </span>
+                            <div className="flex flex-col gap-0.5">
+                              {dayItems.slice(0, 3).map(item => (
+                                <button
+                                  key={item.id}
+                                  onClick={e => { e.stopPropagation(); openDetail(item) }}
+                                  className={`${eventColor(item.id)} text-white text-[10px] font-medium px-1.5 py-0.5 rounded truncate text-left w-full hover:opacity-80 transition-opacity cursor-pointer`}
+                                >
+                                  {item.title}
+                                </button>
+                              ))}
+                              {dayItems.length > 3 && (
+                                <span className="text-[10px] text-gray-500 pl-1">+{dayItems.length - 3}개</span>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
             )}
           </div>
 

@@ -88,6 +88,8 @@ public class PhotoService {
     }
 
     private String getSignedUrl(String storagePath) {
+        if (supabaseUrl == null || supabaseUrl.isEmpty()) return "";
+
         String signUrl = supabaseUrl + "/storage/v1/object/sign/" + bucket + "/" + storagePath;
 
         HttpHeaders headers = new HttpHeaders();
@@ -97,11 +99,21 @@ public class PhotoService {
         Map<String, Integer> body = Map.of("expiresIn", SIGNED_URL_EXPIRES);
         HttpEntity<Map<String, Integer>> entity = new HttpEntity<>(body, headers);
 
-        @SuppressWarnings("unchecked")
-        Map<String, String> result = restTemplate.postForObject(signUrl, entity, Map.class);
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = restTemplate.postForObject(signUrl, entity, Map.class);
+            if (result == null) return "";
 
-        if (result == null || result.get("signedURL") == null) return "";
-        return supabaseUrl + result.get("signedURL");
+            // Supabase 버전에 따라 "signedURL" 또는 "signedUrl" 반환
+            Object signed = result.getOrDefault("signedURL", result.get("signedUrl"));
+            if (signed == null) return "";
+
+            String signedStr = signed.toString();
+            // 이미 절대 URL이면 그대로, 상대 경로면 앞에 baseUrl 붙임
+            return signedStr.startsWith("http") ? signedStr : supabaseUrl + signedStr;
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private String getExtension(String filename) {

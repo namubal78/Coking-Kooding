@@ -29,11 +29,14 @@ jobs:
             -d "{\"commitMessage\":$(echo "$COMMIT_MSG" | jq -Rs .),\"author\":$(echo "$AUTHOR" | jq -Rs .),\"sha\":$(echo "$SHA" | jq -Rs .),\"changedFiles\":$FILES,\"timestamp\":$(echo "$TIMESTAMP" | jq -Rs .)}"
 
       - name: Slack 배포 알림
-        if: ${{ secrets.SLACK_BOT_TOKEN != '' }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         run: |
+          if [ -z "$SLACK_BOT_TOKEN" ]; then exit 0; fi
           COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
           SHA=$(git log -1 --pretty=%H | cut -c1-7)
           curl -s -X POST "https://slack.com/api/chat.postMessage" \
-            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"channel\":\"${{ secrets.SLACK_CHANNEL_ID }}\",\"text\":\"✅ 배포 완료 [\`$SHA\`] $COMMIT_MSG\"}"
+            -d "{\"channel\":\"$SLACK_CHANNEL_ID\",\"text\":\"✅ 배포 완료 [\`$SHA\`] $(echo "$COMMIT_MSG" | jq -Rs .)\"}"

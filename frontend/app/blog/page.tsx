@@ -89,13 +89,13 @@ function BlogContent() {
     setCreating(false)
   }
 
-  async function savePost() {
+  async function savePost(content: string) {
     setSaving(true)
     try {
       const body = {
         title: form.title,
         category: form.category,
-        content: form.content,
+        content,
         excerpt: form.excerpt,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
       }
@@ -126,7 +126,7 @@ function BlogContent() {
       <Navbar />
       <main className="max-w-3xl mx-auto px-6 pt-28 pb-16">
         <h1 className="text-2xl font-bold mb-8">새 글 작성</h1>
-        <PostForm form={form} setForm={setForm} saving={saving} onSave={savePost} onCancel={backToList} />
+        <PostForm form={form} setForm={setForm} saving={saving} onSave={(content) => savePost(content)} onCancel={backToList} />
       </main>
     </div>
   )
@@ -138,7 +138,7 @@ function BlogContent() {
         {editing ? (
           <>
             <h1 className="text-2xl font-bold mb-8">글 수정</h1>
-            <PostForm form={form} setForm={setForm} saving={saving} onSave={savePost} onCancel={() => setEditing(false)} />
+            <PostForm form={form} setForm={setForm} saving={saving} onSave={(content) => savePost(content)} onCancel={() => setEditing(false)} />
           </>
         ) : (
           <article>
@@ -224,17 +224,14 @@ function PostForm({ form, setForm, saving, onSave, onCancel }: {
   form: typeof EMPTY_FORM
   setForm: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>
   saving: boolean
-  onSave: () => void
+  onSave: (content: string) => void
   onCancel: () => void
 }) {
   const editorRef = useRef<any>(null)
 
   function handleSave() {
-    const md = editorRef.current?.getInstance()?.getMarkdown()
-    if (md !== undefined) {
-      setForm(prev => ({ ...prev, content: md }))
-    }
-    onSave()
+    const md = editorRef.current?.getInstance()?.getMarkdown() ?? form.content
+    onSave(md)
   }
 
   return (
