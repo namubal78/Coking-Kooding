@@ -15,13 +15,24 @@ type DevLog = {
 }
 
 function renderMarkdown(text: string) {
-  return text
+  // fenced code blocks first (multiline)
+  let result = text.replace(
+    /```(\w*)\n([\s\S]*?)```/g,
+    (_m, lang: string, code: string) => {
+      const label = lang ? `<span class="text-xs text-gray-500 mb-1 block">${lang}</span>` : ''
+      return `<pre class="bg-gray-900 border border-gray-700 rounded-lg p-4 my-3 overflow-x-auto text-xs text-indigo-200 leading-relaxed">${label}${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`
+    }
+  )
+  return result
+    .replace(/^### (.+)$/gm, '<h3 class="text-sm font-bold text-indigo-200 mt-4 mb-1">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="text-base font-bold text-indigo-300 mt-5 mb-1">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 class="text-lg font-bold text-white mt-6 mb-2">$1</h1>')
-    .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-gray-600 pl-3 text-gray-500 italic">$1</blockquote>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^> (.+)$/gm, '<blockquote class="border-l-2 border-indigo-600 pl-3 text-gray-400 text-xs my-2">$1</blockquote>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">$1</a>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-gray-200">$1</strong>')
     .replace(/`(.+?)`/g, '<code class="bg-gray-800 px-1 rounded text-indigo-300 text-xs">$1</code>')
     .replace(/^---$/gm, '<hr class="border-gray-700 my-6"/>')
+    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-gray-400 text-sm">$1</li>')
     .replace(/\n/g, '<br/>')
 }
 

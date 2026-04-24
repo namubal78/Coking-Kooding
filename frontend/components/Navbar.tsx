@@ -8,7 +8,7 @@ import { getToken, parseJwt, getDisplayName } from '@/lib/api'
 const PUBLIC_LINKS = [
   { href: '/blog', label: '블로그' },
   { href: '/portfolio', label: '포트폴리오' },
-  { href: '/demo', label: '데모' },
+  { href: '/demo', label: '기능 데모' },
 ]
 
 const WORLD_LINKS = [
@@ -43,12 +43,8 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/about" className="text-sm font-mono text-gray-400 hover:text-indigo-400 transition-colors">
-            namubal78
-          </Link>
-          <span className="text-gray-700">·</span>
           <Link
-            href={loggedIn ? '/world/dashboard' : '/'}
+            href={loggedIn ? '/world/dashboard' : '/home'}
             className="text-xl font-bold tracking-tight text-white hover:text-indigo-400 transition-colors"
           >
             Coking<span className="text-indigo-400">Cooding</span>
@@ -56,6 +52,10 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-5">
+          <Link href="/about" className="text-sm font-mono text-gray-400 hover:text-indigo-400 transition-colors">
+            NAMUBAL78
+          </Link>
+
           {PUBLIC_LINKS.map((l) => (
             <Link
               key={l.href}
@@ -88,7 +88,7 @@ export default function Navbar() {
               href="/login"
               className="text-sm bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg transition-colors"
             >
-              은새네 로그인
+              은새월드
             </Link>
           )}
         </div>

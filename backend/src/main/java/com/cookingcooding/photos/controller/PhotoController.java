@@ -4,6 +4,7 @@ import com.cookingcooding.photos.dto.PhotoResponse;
 import com.cookingcooding.photos.service.PhotoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,12 @@ public class PhotoController {
     @GetMapping
     public ResponseEntity<List<PhotoResponse>> getAll() {
         return ResponseEntity.ok(photoService.getAll());
+    }
+
+    @GetMapping("/storage")
+    public ResponseEntity<Map<String, Long>> storage() {
+        long used = photoService.getStorageUsed();
+        return ResponseEntity.ok(Map.of("usedBytes", used, "limitBytes", 1_073_741_824L));
     }
 
     @PostMapping("/upload")

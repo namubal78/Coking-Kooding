@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/chat").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/files", "/api/files/extensions").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/payments").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/photos/storage").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/dev-logs/webhook").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/slack/events").permitAll()
                 .anyRequest().authenticated()

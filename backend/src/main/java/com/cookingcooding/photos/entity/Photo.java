@@ -29,4 +29,6 @@ public class Photo {
 
     @Column(nullable = false)
     private LocalDateTime uploadedAt;
+
+    private Long fileSize;
 }

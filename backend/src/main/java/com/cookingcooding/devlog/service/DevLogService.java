@@ -68,10 +68,12 @@ public class DevLogService {
         return (content.split("---", -1).length);
     }
 
+    private static final String GITHUB_REPO = "https://github.com/namubal78/Coking-Cooding";
+
     private String generateSummary(DevLogWebhookRequest req) {
         String files = req.changedFiles() != null ? String.join(", ", req.changedFiles()) : "없음";
         String prompt = """
-                다음 커밋 정보를 바탕으로 개발 작업 초록을 한국어로 작성해줘.
+                다음 커밋 정보를 바탕으로 개발 작업 일지를 한국어로 작성해줘.
 
                 커밋 메시지: %s
                 작성자: %s
@@ -79,7 +81,10 @@ public class DevLogService {
                 변경 파일: %s
                 시각: %s
 
-                아래 형식으로 작성해줘:
+                아래 형식을 정확히 따라줘:
+
+                ## 이슈 및 문제상황
+                (이 커밋에서 해결하려 했던 문제나 배경을 1~3문장으로. 문제가 없으면 "해당 없음")
 
                 ## 커밋 요약
                 (무엇을 했는지 1~2문장)
@@ -87,8 +92,22 @@ public class DevLogService {
                 ## 주요 변경사항
                 (변경 파일별 핵심 내용, 각 파일 한 줄씩)
 
+                ## BEFORE / AFTER
+                ```before
+                (변경 전 핵심 코드나 상황 1~4줄. 코드가 없으면 이전 동작 설명)
+                ```
+                ```after
+                (변경 후 핵심 코드나 결과 1~4줄)
+                ```
+
                 ## 기술 개념 설명
-                (이 커밋에서 등장한 기술 키워드 2~4개를 골라 각각 2~3문장으로 쉽게 설명)
+                (이 커밋에서 등장한 기술 키워드 2~4개를 골라 각각 아래 형식으로 설명)
+
+                ### 키워드명
+                (키워드에 대한 설명 2~3문장)
+                - **서브키워드1**: 1문장 설명
+                - **서브키워드2**: 1문장 설명
+                - **서브키워드3**: 1문장 설명
 
                 ## 결과
                 정상 처리됨 / 이슈 발생 등 한 줄로 작성
@@ -105,16 +124,18 @@ public class DevLogService {
                 "messages", List.of(Map.of("role", "user", "content", prompt))
         );
 
+        String shaLink = "> SHA: [" + req.sha() + "](" + GITHUB_REPO + "/commit/" + req.sha() + ")\n\n";
+
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.postForObject(ANTHROPIC_URL, new HttpEntity<>(body, headers), Map.class);
-            if (response == null) return "# " + req.commitMessage() + "\n\nAI 요약 생성 실패";
+            if (response == null) return shaLink + "# " + req.commitMessage() + "\n\nAI 요약 생성 실패";
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> content = (List<Map<String, Object>>) response.get("content");
-            return (String) content.get(0).get("text");
+            return shaLink + content.get(0).get("text");
         } catch (Exception e) {
-            return "## 커밋 요약\n" + req.commitMessage() + "\n\n> AI 요약 생성 실패: " + e.getMessage();
+            return shaLink + "## 커밋 요약\n" + req.commitMessage() + "\n\n> AI 요약 생성 실패: " + e.getMessage();
         }
     }
 }

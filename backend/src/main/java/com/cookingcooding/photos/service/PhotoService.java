@@ -63,10 +63,16 @@ public class PhotoService {
                 .storagePath(storagePath)
                 .uploadedBy(uploaderEmail)
                 .uploadedAt(LocalDateTime.now())
+                .fileSize(file.getSize())
                 .build();
 
         Photo saved = photoRepository.save(photo);
         return PhotoResponse.of(saved, getSignedUrl(storagePath));
+    }
+
+    public long getStorageUsed() {
+        Long used = photoRepository.sumFileSize();
+        return used != null ? used : 0L;
     }
 
     public void delete(Long id) {

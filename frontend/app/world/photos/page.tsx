@@ -12,6 +12,11 @@ type Photo = {
   uploadedBy: string
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export default function PhotosPage() {
   const fileInput = useRef<HTMLInputElement>(null)
   const [photos, setPhotos] = useState<Photo[]>([])
@@ -19,9 +24,17 @@ export default function PhotosPage() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState<Photo | null>(null)
+  const [usedBytes, setUsedBytes] = useState(0)
+  const limitBytes = 1_073_741_824
 
   useEffect(() => {
-    apiFetch('/api/photos').then(r => r.json()).then(setPhotos).catch(() => {}).finally(() => setLoading(false))
+    Promise.all([
+      apiFetch('/api/photos').then(r => r.json()),
+      apiFetch('/api/photos/storage').then(r => r.json()),
+    ]).then(([photos, storage]) => {
+      setPhotos(photos)
+      setUsedBytes(storage.usedBytes ?? 0)
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -34,6 +47,7 @@ export default function PhotosPage() {
       fd.append('file', file)
       const uploaded = await apiUpload('/api/photos/upload', fd).then(r => r.json())
       setPhotos(prev => [uploaded, ...prev])
+      setUsedBytes(prev => prev + (file.size ?? 0))
     } catch {
       setError('업로드 실패. 이미지 파일만 지원합니다.')
     } finally {
@@ -44,21 +58,38 @@ export default function PhotosPage() {
 
   async function deletePhoto(id: number) {
     if (!confirm('삭제할까요?')) return
+    const photo = photos.find(p => p.id === id)
     await apiFetch(`/api/photos/${id}`, { method: 'DELETE' })
     setPhotos(prev => prev.filter(p => p.id !== id))
     if (selected?.id === id) setSelected(null)
+    // refresh storage after delete
+    apiFetch('/api/photos/storage').then(r => r.json()).then(s => setUsedBytes(s.usedBytes ?? 0)).catch(() => {})
   }
+
+  const usedPct = Math.min((usedBytes / limitBytes) * 100, 100)
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
       <main className="max-w-5xl mx-auto px-6 pt-28 pb-16">
-        <div className="mb-8 flex items-end justify-between">
+        <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
           <div>
             <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">은새월드</p>
             <h1 className="text-3xl font-bold">사진 앨범</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {/* Storage indicator */}
+            <div className="text-right">
+              <p className="text-xs text-gray-500 mb-1">
+                {formatBytes(usedBytes)} / 1 GB
+              </p>
+              <div className="w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-indigo-500 rounded-full transition-all"
+                  style={{ width: `${usedPct}%` }}
+                />
+              </div>
+            </div>
             {error && <span className="text-red-400 text-sm">{error}</span>}
             <button
               onClick={() => fileInput.current?.click()}
@@ -81,23 +112,23 @@ export default function PhotosPage() {
             <p className="text-gray-700 text-sm">첫 사진을 추가해보세요</p>
           </div>
         ) : (
-          <div className="columns-2 sm:columns-3 lg:columns-4 gap-3 space-y-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-1.5">
             {photos.map(p => (
               <div
                 key={p.id}
-                className="break-inside-avoid relative group cursor-pointer rounded-xl overflow-hidden bg-gray-900"
+                className="relative group cursor-pointer aspect-square overflow-hidden rounded-lg bg-gray-900"
                 onClick={() => setSelected(p)}
               >
                 <img
                   src={p.publicUrl}
                   alt={p.fileName}
-                  className="w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200" />
                 <button
                   onClick={(e) => { e.stopPropagation(); deletePhoto(p.id) }}
-                  className="absolute top-2 right-2 bg-black/60 hover:bg-red-600 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                  className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-600 text-white text-xs px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                 >
                   삭제
                 </button>
@@ -109,14 +140,14 @@ export default function PhotosPage() {
 
       {selected && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
+          className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 cursor-pointer"
           onClick={() => setSelected(null)}
         >
           <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
-            <img src={selected.publicUrl} alt={selected.fileName} className="w-full max-h-[85vh] object-contain rounded-xl" />
+            <img src={selected.publicUrl} alt={selected.fileName} className="w-full max-h-[88vh] object-contain rounded-xl" />
             <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-              <p className="text-white/70 text-xs">{selected.fileName} · {new Date(selected.uploadedAt).toLocaleDateString('ko-KR')}</p>
-              <button onClick={() => setSelected(null)} className="text-white/60 hover:text-white text-sm cursor-pointer">닫기</button>
+              <p className="text-white/60 text-xs">{selected.fileName} · {new Date(selected.uploadedAt).toLocaleDateString('ko-KR')}</p>
+              <button onClick={() => setSelected(null)} className="text-white/50 hover:text-white text-sm cursor-pointer">닫기 ✕</button>
             </div>
           </div>
         </div>

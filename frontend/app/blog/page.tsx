@@ -1,9 +1,24 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import '@toast-ui/editor/dist/toastui-editor.css'
+import '@toast-ui/editor/dist/theme/toastui-editor-dark.css'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
-import { getToken, apiFetch } from '@/lib/api'
+import { getToken, parseJwt, apiFetch } from '@/lib/api'
+
+const ToastEditor = dynamic(
+  () => import('@toast-ui/react-editor').then(m => m.Editor),
+  { ssr: false }
+)
+const ToastViewer = dynamic(
+  () => import('@toast-ui/react-editor').then(m => m.Viewer),
+  { ssr: false }
+)
+
+const ADMIN_EMAIL = 'namubal78@gmail.com'
+const CATEGORIES = ['학습', '트러블슈팅', '가족', '초안'] as const
 
 type Post = {
   id: number
@@ -16,7 +31,13 @@ type Post = {
   createdAt: string
 }
 
-const EMPTY_FORM = { title: '', category: '', content: '', excerpt: '', tags: '' }
+const EMPTY_FORM = { title: '', category: '학습', content: '', excerpt: '', tags: '' }
+
+function isAdmin(): boolean {
+  const token = getToken()
+  if (!token) return false
+  return parseJwt(token)?.sub === ADMIN_EMAIL
+}
 
 export default function BlogPage() {
   return (
@@ -38,10 +59,13 @@ function BlogContent() {
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [admin, setAdmin] = useState(false)
 
   useEffect(() => {
-    setIsLoggedIn(!!getToken())
+    const token = getToken()
+    setLoggedIn(!!token)
+    setAdmin(isAdmin())
     apiFetch('/api/blog/posts').then(r => r.json()).then(setPosts).finally(() => setLoading(false))
   }, [])
 
@@ -50,8 +74,8 @@ function BlogContent() {
     apiFetch(`/api/blog/posts/${postId}`).then(r => r.json()).then((p: Post) => {
       setDetail(p)
       setForm({ title: p.title, category: p.category, content: p.content, excerpt: p.excerpt ?? '', tags: p.tags?.join(', ') ?? '' })
-    })
-  }, [postId])
+    }).catch(() => router.push('/blog'))
+  }, [postId, router])
 
   function openDetail(id: number) {
     router.push(`/blog?id=${id}`)
@@ -122,14 +146,16 @@ function BlogContent() {
             <h1 className="text-3xl font-bold mt-3 mb-2">{detail.title}</h1>
             <div className="flex items-center justify-between text-gray-600 text-sm mb-8 pb-6 border-b border-gray-800">
               <span>{detail.authorNickname} · {new Date(detail.createdAt).toLocaleDateString('ko-KR')}</span>
-              {isLoggedIn && (
+              {admin && (
                 <div className="flex gap-4">
                   <button onClick={() => setEditing(true)} className="hover:text-indigo-400 transition-colors cursor-pointer">수정</button>
                   <button onClick={() => deletePost(detail.id)} className="hover:text-red-400 transition-colors cursor-pointer">삭제</button>
                 </div>
               )}
             </div>
-            <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">{detail.content}</div>
+            <div className="toastui-viewer-wrap">
+              <ToastViewer initialValue={detail.content} theme="dark" />
+            </div>
             {detail.tags?.length > 0 && (
               <div className="flex gap-2 mt-8 pt-6 border-t border-gray-800 flex-wrap">
                 {detail.tags.map(t => <span key={t} className="text-xs text-gray-600">#{t}</span>)}
@@ -151,7 +177,7 @@ function BlogContent() {
             <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Blog</p>
             <h1 className="text-3xl font-bold">블로그</h1>
           </div>
-          {isLoggedIn && (
+          {loggedIn && (
             <button
               onClick={() => { setCreating(true); setForm(EMPTY_FORM) }}
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
@@ -181,7 +207,7 @@ function BlogContent() {
                     {p.excerpt && <p className="text-gray-500 text-sm mt-1 line-clamp-2">{p.excerpt}</p>}
                     <p className="text-gray-700 text-xs mt-3">{p.authorNickname} · {new Date(p.createdAt).toLocaleDateString('ko-KR')}</p>
                   </div>
-                  {isLoggedIn && (
+                  {admin && (
                     <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0 cursor-pointer">삭제</button>
                   )}
                 </div>
@@ -201,33 +227,76 @@ function PostForm({ form, setForm, saving, onSave, onCancel }: {
   onSave: () => void
   onCancel: () => void
 }) {
+  const editorRef = useRef<any>(null)
+
+  function handleSave() {
+    const md = editorRef.current?.getInstance()?.getMarkdown()
+    if (md !== undefined) {
+      setForm(prev => ({ ...prev, content: md }))
+    }
+    onSave()
+  }
+
   return (
     <div className="space-y-5">
-      {(['title', 'category', 'excerpt', 'tags'] as const).map(field => (
-        <div key={field}>
-          <label className="block text-sm text-gray-400 mb-1.5">
-            {field === 'title' ? '제목' : field === 'category' ? '카테고리' : field === 'excerpt' ? '요약' : '태그 (쉼표 구분)'}
-          </label>
-          <input
-            className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
-            value={form[field]}
-            onChange={e => setForm(prev => ({ ...prev, [field]: e.target.value }))}
-            required={field === 'title' || field === 'category'}
-          />
-        </div>
-      ))}
       <div>
-        <label className="block text-sm text-gray-400 mb-1.5">내용</label>
-        <textarea
-          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-          rows={12}
-          value={form.content}
-          onChange={e => setForm(prev => ({ ...prev, content: e.target.value }))}
+        <label className="block text-sm text-gray-400 mb-1.5">제목</label>
+        <input
+          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+          value={form.title}
+          onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
           required
         />
       </div>
+
+      <div>
+        <label className="block text-sm text-gray-400 mb-1.5">카테고리</label>
+        <select
+          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+          value={form.category}
+          onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
+        >
+          {CATEGORIES.map(c => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm text-gray-400 mb-1.5">요약</label>
+        <input
+          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+          value={form.excerpt}
+          onChange={e => setForm(prev => ({ ...prev, excerpt: e.target.value }))}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm text-gray-400 mb-1.5">태그 (쉼표 구분)</label>
+        <input
+          className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+          value={form.tags}
+          onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm text-gray-400 mb-1.5">내용</label>
+        <div className="rounded-lg overflow-hidden border border-gray-800">
+          <ToastEditor
+            ref={editorRef}
+            initialValue={form.content || ' '}
+            previewStyle="vertical"
+            height="480px"
+            initialEditType="markdown"
+            useCommandShortcut
+            theme="dark"
+          />
+        </div>
+      </div>
+
       <div className="flex gap-3">
-        <button onClick={onSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-semibold transition-colors cursor-pointer">
+        <button onClick={handleSave} disabled={saving} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-semibold transition-colors cursor-pointer">
           {saving ? '저장 중...' : '저장'}
         </button>
         <button onClick={onCancel} className="text-gray-500 hover:text-gray-300 px-4 py-3 transition-colors cursor-pointer">취소</button>
