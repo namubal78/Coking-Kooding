@@ -61,6 +61,8 @@ function BlogContent() {
   const [saving, setSaving] = useState(false)
   const [loggedIn, setLoggedIn] = useState(false)
   const [admin, setAdmin] = useState(false)
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 10
 
   useEffect(() => {
     const token = getToken()
@@ -82,11 +84,19 @@ function BlogContent() {
     setEditing(false)
   }
 
+  async function openEdit(p: Post) {
+    setDetail(p)
+    setForm({ title: p.title, category: p.category, content: p.content, excerpt: p.excerpt ?? '', tags: p.tags?.join(', ') ?? '' })
+    setEditing(true)
+    setCreating(false)
+  }
+
   function backToList() {
     router.push('/blog')
     setDetail(null)
     setEditing(false)
     setCreating(false)
+    setPage(0)
   }
 
   async function savePost(content: string) {
@@ -194,26 +204,66 @@ function BlogContent() {
         ) : posts.length === 0 ? (
           <p className="text-center py-20 text-gray-600">아직 게시글이 없습니다.</p>
         ) : (
-          <div className="space-y-4">
-            {posts.map(p => (
-              <div key={p.id} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-indigo-500/30 transition-all">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0 cursor-pointer select-none" onClick={() => openDetail(p.id)}>
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded-full">{p.category}</span>
-                      {p.tags?.map(t => <span key={t} className="text-xs text-gray-600">#{t}</span>)}
+          <>
+            <div className="space-y-4">
+              {posts.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map(p => (
+                <div key={p.id} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-indigo-500/30 transition-all">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded-full">{p.category}</span>
+                        {p.tags?.map(t => <span key={t} className="text-xs text-gray-600">#{t}</span>)}
+                      </div>
+                      <h2
+                        className="text-lg font-semibold text-white hover:text-indigo-400 transition-colors cursor-pointer"
+                        onClick={() => openDetail(p.id)}
+                      >
+                        {p.title}
+                      </h2>
+                      {p.excerpt && <p className="text-gray-500 text-sm mt-1 line-clamp-2">{p.excerpt}</p>}
+                      <div className="flex items-center justify-between mt-3">
+                        <p className="text-gray-700 text-xs">{p.authorNickname} · {new Date(p.createdAt).toLocaleDateString('ko-KR')}</p>
+                        <button
+                          onClick={() => openDetail(p.id)}
+                          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
+                        >
+                          읽기 →
+                        </button>
+                      </div>
                     </div>
-                    <h2 className="text-lg font-semibold text-white hover:text-indigo-400 transition-colors">{p.title}</h2>
-                    {p.excerpt && <p className="text-gray-500 text-sm mt-1 line-clamp-2">{p.excerpt}</p>}
-                    <p className="text-gray-700 text-xs mt-3">{p.authorNickname} · {new Date(p.createdAt).toLocaleDateString('ko-KR')}</p>
+                    {admin && (
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button onClick={() => openEdit(p)} className="text-gray-500 hover:text-indigo-400 text-sm transition-colors cursor-pointer">수정</button>
+                        <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors cursor-pointer">삭제</button>
+                      </div>
+                    )}
                   </div>
-                  {admin && (
-                    <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors shrink-0 cursor-pointer">삭제</button>
-                  )}
                 </div>
+              ))}
+            </div>
+
+            {posts.length > PAGE_SIZE && (
+              <div className="flex items-center justify-center gap-4 mt-8">
+                <button
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  disabled={page === 0}
+                  className="px-4 py-2 text-sm text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  ← 이전
+                </button>
+                <span className="text-sm text-gray-600">
+                  {page + 1} / {Math.ceil(posts.length / PAGE_SIZE)}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(Math.ceil(posts.length / PAGE_SIZE) - 1, p + 1))}
+                  disabled={(page + 1) * PAGE_SIZE >= posts.length}
+                  className="px-4 py-2 text-sm text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                >
+                  다음 →
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
     </div>
