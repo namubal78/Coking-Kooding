@@ -14,6 +14,7 @@ const PUBLIC_LINKS = [
 const WORLD_LINKS = [
   { href: '/world/dashboard', label: '홈' },
   { href: '/world/planner', label: '플래너' },
+  { href: '/world/workout', label: '운동' },
   { href: '/world/photos', label: '앨범' },
   { href: '/world/draft', label: '드래프트' },
 ]
