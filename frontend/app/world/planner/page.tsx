@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { apiFetch } from '@/lib/api'
 
@@ -43,6 +43,9 @@ export default function PlannerPage() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [voiceError, setVoiceError] = useState('')
+  const recognitionRef = useRef<any>(null)
 
   useEffect(() => {
     apiFetch('/api/planner').then(r => r.json()).then(setItems).finally(() => setLoading(false))
@@ -98,6 +101,49 @@ export default function PlannerPage() {
     setForm({ title: selected.title, description: selected.description ?? '', date: selected.date })
     setEditing(true)
     setSidebar('new')
+  }
+
+  function startVoice() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) { setVoiceError('이 브라우저는 음성인식을 지원하지 않아요 (Chrome 권장)'); return }
+
+    const rec = new SR()
+    rec.lang = 'ko-KR'
+    rec.interimResults = false
+    rec.maxAlternatives = 1
+    recognitionRef.current = rec
+
+    rec.onstart = () => { setListening(true); setVoiceError('') }
+    rec.onend = () => setListening(false)
+    rec.onerror = () => { setListening(false); setVoiceError('음성인식 실패. 다시 시도해주세요.') }
+
+    rec.onresult = async (e: any) => {
+      const text = e.results[0][0].transcript
+      const todayStr = dateKey(today)
+      try {
+        const res = await apiFetch('/api/planner/voice', {
+          method: 'POST',
+          body: JSON.stringify({ text, today: todayStr }),
+        }).then(r => r.json())
+        setForm({
+          title: res.title || text,
+          date: res.date || todayStr,
+          description: res.description || '',
+        })
+        setSidebar('new')
+        setEditing(false)
+      } catch {
+        setForm(f => ({ ...f, title: text, date: f.date || todayStr }))
+        setSidebar('new')
+      }
+    }
+
+    rec.start()
+  }
+
+  function stopVoice() {
+    recognitionRef.current?.stop()
+    setListening(false)
   }
 
   async function save() {
@@ -193,6 +239,13 @@ export default function PlannerPage() {
             </button>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={listening ? stopVoice : startVoice}
+              title="음성으로 일정 추가"
+              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all cursor-pointer ${listening ? 'bg-red-600 border-red-500 animate-pulse' : 'border-gray-700 hover:bg-gray-800 text-gray-400'}`}
+            >
+              🎤
+            </button>
             <div className="flex rounded-lg overflow-hidden border border-gray-800 text-sm">
               {(['month', 'week'] as const).map(v => (
                 <button
@@ -206,6 +259,10 @@ export default function PlannerPage() {
             </div>
           </div>
         </div>
+
+        {voiceError && (
+          <p className="text-xs text-red-400 text-right px-2 -mt-2 mb-1">{voiceError}</p>
+        )}
 
         <div className="flex flex-1 gap-4 min-h-0">
           {/* Calendar */}
