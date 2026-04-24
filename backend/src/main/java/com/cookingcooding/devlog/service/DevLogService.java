@@ -71,6 +71,9 @@ public class DevLogService {
     private static final String GITHUB_REPO = "https://github.com/namubal78/Coking-Cooding";
 
     private String generateSummary(DevLogWebhookRequest req) {
+        String sha = req.sha() != null ? req.sha().strip() : "";
+        String commitMessage = req.commitMessage() != null ? req.commitMessage().strip() : "";
+        String author = req.author() != null ? req.author().strip() : "";
         String files = req.changedFiles() != null ? String.join(", ", req.changedFiles()) : "없음";
         String prompt = """
                 다음 커밋 정보를 바탕으로 개발 작업 일지를 한국어로 작성해줘.
@@ -80,6 +83,7 @@ public class DevLogService {
                 커밋 SHA: %s
                 변경 파일: %s
                 시각: %s
+
 
                 아래 형식을 정확히 따라줘:
 
@@ -111,7 +115,7 @@ public class DevLogService {
 
                 ## 결과
                 정상 처리됨 / 이슈 발생 등 한 줄로 작성
-                """.formatted(req.commitMessage(), req.author(), req.sha(), files, req.timestamp());
+                """.formatted(commitMessage, author, sha, files, req.timestamp());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -124,12 +128,12 @@ public class DevLogService {
                 "messages", List.of(Map.of("role", "user", "content", prompt))
         );
 
-        String shaLink = "> SHA: [" + req.sha() + "](" + GITHUB_REPO + "/commit/" + req.sha() + ")\n\n";
+        String shaLink = "> SHA: [" + sha + "](" + GITHUB_REPO + "/commit/" + sha + ")\n\n";
 
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> response = restTemplate.postForObject(ANTHROPIC_URL, new HttpEntity<>(body, headers), Map.class);
-            if (response == null) return shaLink + "# " + req.commitMessage() + "\n\nAI 요약 생성 실패";
+            if (response == null) return shaLink + "# " + commitMessage + "\n\nAI 요약 생성 실패";
 
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> content = (List<Map<String, Object>>) response.get("content");
