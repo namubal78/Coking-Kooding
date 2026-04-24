@@ -33,10 +33,13 @@ jobs:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         run: |
-          if [ -z "$SLACK_BOT_TOKEN" ]; then exit 0; fi
+          echo "TOKEN_SET=$([ -n "$SLACK_BOT_TOKEN" ] && echo YES || echo NO)"
+          echo "CHANNEL=$SLACK_CHANNEL_ID"
+          if [ -z "$SLACK_BOT_TOKEN" ]; then echo "토큰 없음, 스킵"; exit 0; fi
           COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
           SHA=$(git log -1 --pretty=%H | cut -c1-7)
-          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+          RESPONSE=$(curl -s -X POST "https://slack.com/api/chat.postMessage" \
             -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"channel\":\"$SLACK_CHANNEL_ID\",\"text\":\"✅ 배포 완료 [\`$SHA\`] $(echo "$COMMIT_MSG" | jq -Rs .)\"}"
+            -d "{\"channel\":\"$SLACK_CHANNEL_ID\",\"text\":\"✅ 배포 완료 [\`$SHA\`] $(echo "$COMMIT_MSG" | jq -Rs .)\"}")
+          echo "SLACK_RESPONSE=$RESPONSE"

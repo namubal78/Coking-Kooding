@@ -19,4 +19,7 @@ public class Exercise {
 
     @Column(nullable = false)
     private int orderIndex;
+
+    @Column(nullable = false)
+    private int restSeconds;
 }
