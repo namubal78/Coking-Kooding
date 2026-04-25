@@ -7,5 +7,6 @@ public record DevLogWebhookRequest(
         String author,
         String sha,
         List<String> changedFiles,
-        String timestamp
+        String timestamp,
+        String diff
 ) {}

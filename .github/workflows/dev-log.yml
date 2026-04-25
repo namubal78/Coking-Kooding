@@ -22,11 +22,12 @@ jobs:
           SHA=$(git log -1 --pretty=%H | cut -c1-7)
           TIMESTAMP=$(git log -1 --pretty=%cI)
           FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | head -20 | jq -Rs 'split("\n") | map(select(length > 0))')
+          DIFF=$(git diff HEAD~1 HEAD -- 'backend/**' 'frontend/app/**' 'frontend/components/**' 'frontend/lib/**' '.github/**' 'scripts/**' 2>/dev/null | head -c 6000 | jq -Rs .)
 
           curl -s -X POST "${{ secrets.API_URL }}/api/dev-logs/webhook" \
             -H "Content-Type: application/json" \
             -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}" \
-            -d "{\"commitMessage\":$(echo "$COMMIT_MSG" | jq -Rs .),\"author\":$(echo "$AUTHOR" | jq -Rs .),\"sha\":$(echo "$SHA" | jq -Rs .),\"changedFiles\":$FILES,\"timestamp\":$(echo "$TIMESTAMP" | jq -Rs .)}"
+            -d "{\"commitMessage\":$(echo "$COMMIT_MSG" | jq -Rs .),\"author\":$(echo "$AUTHOR" | jq -Rs .),\"sha\":$(echo "$SHA" | jq -Rs .),\"changedFiles\":$FILES,\"timestamp\":$(echo "$TIMESTAMP" | jq -Rs .),\"diff\":$DIFF}"
 
       - name: Slack 배포 알림
         env:
