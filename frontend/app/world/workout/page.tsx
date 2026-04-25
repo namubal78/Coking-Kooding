@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { apiFetch, apiUpload } from '@/lib/api'
 
-type Exercise = { id: number; name: string; totalSets: number; orderIndex: number; restSeconds: number }
+type Exercise = { id: number; name: string; totalSets: number; orderIndex: number; restSeconds: number; durationSeconds: number }
 type WorkoutLog = { exerciseId: number; date: string; completedSets: number }
 type DayStat = { date: string; totalSets: number; completedSets: number; completionRate: number }
 type DetailStat = { exerciseId: number; name: string; completedSets: number; totalSets: number; completionRate: number }
-type RestTimer = { name: string; secondsLeft: number; total: number }
+type RestTimer = { exerciseId: number; name: string; secondsLeft: number; total: number }
+type WorkoutTimer = { exerciseId: number; name: string; secondsLeft: number; total: number }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -16,13 +17,13 @@ function fmt(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function speak(text: string) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-  window.speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  u.lang = 'ko-KR'
-  u.rate = 0.95
-  window.speechSynthesis.speak(u)
+function formatTime(seconds: number) {
+  if (seconds >= 60) {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
+  return `${seconds}초`
 }
 
 export default function WorkoutPage() {
@@ -32,27 +33,40 @@ export default function WorkoutPage() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [logs, setLogs] = useState<WorkoutLog[]>([])
   const [loading, setLoading] = useState(true)
+  const exercisesRef = useRef<Exercise[]>([])
+  const logsRef = useRef<WorkoutLog[]>([])
 
   // ── UI ───────────────────────────────────────────────────────────
   const [flash, setFlash] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newEx, setNewEx] = useState({ name: '', totalSets: 3, restSeconds: 60 })
+  const [newEx, setNewEx] = useState({ name: '', totalSets: 3, restSeconds: 60, durationSeconds: 0 })
 
   // ── 음성인식 ─────────────────────────────────────────────────────
   const [micOn, setMicOn] = useState(false)
   const micOnRef = useRef(false)
   const recognitionRef = useRef<any>(null)
-  const exercisesRef = useRef<Exercise[]>([])
+
+  // ── TTS 볼륨 ─────────────────────────────────────────────────────
+  const [volume, setVolume] = useState(0.8)
+  const [muted, setMuted] = useState(false)
+  const volumeRef = useRef(0.8)
+  const mutedRef = useRef(false)
+
+  // ── 운동 타이머 ──────────────────────────────────────────────────
+  const [workoutTimer, setWorkoutTimer] = useState<WorkoutTimer | null>(null)
+  const alerted30Ref = useRef(false)
+  const alerted10Ref = useRef(false)
 
   // ── 휴식 타이머 ──────────────────────────────────────────────────
   const [restTimer, setRestTimer] = useState<RestTimer | null>(null)
   const alerted5Ref = useRef(false)
 
-  // ── 운동 모달 (동영상 + 휴식 설정) ────────────────────────────────
+  // ── 운동 모달 ────────────────────────────────────────────────────
   const [selectedEx, setSelectedEx] = useState<Exercise | null>(null)
   const [videoUrl, setVideoUrl] = useState('')
   const [videoLoading, setVideoLoading] = useState(false)
   const [restInput, setRestInput] = useState(60)
+  const [durationInput, setDurationInput] = useState(0)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -64,8 +78,12 @@ export default function WorkoutPage() {
   const [selectedStatDate, setSelectedStatDate] = useState<string | null>(null)
   const [detailStats, setDetailStats] = useState<DetailStat[]>([])
 
-  // ── 초기 로드 ────────────────────────────────────────────────────
+  // ── Ref 동기화 ───────────────────────────────────────────────────
+  useEffect(() => { volumeRef.current = volume }, [volume])
+  useEffect(() => { mutedRef.current = muted }, [muted])
+  useEffect(() => { logsRef.current = logs }, [logs])
 
+  // ── 초기 로드 ────────────────────────────────────────────────────
   useEffect(() => { loadAll() }, [])
 
   useEffect(() => {
@@ -90,42 +108,28 @@ export default function WorkoutPage() {
     loadStats()
   }
 
-  function getStatRange() {
-    if (statsMode === 'week') {
-      const end = new Date()
-      end.setDate(end.getDate() + weekOffset * 7)
-      const start = new Date(end)
-      start.setDate(start.getDate() - 6)
-      return { start: fmt(start), end: fmt(end) }
-    } else {
-      const first = fmt(new Date(monthCursor.year, monthCursor.month, 1))
-      const last = fmt(new Date(monthCursor.year, monthCursor.month + 1, 0))
-      return { start: first, end: last <= today ? last : today }
-    }
-  }
-
-  async function loadStats() {
-    const { start, end } = getStatRange()
-    try {
-      const res = await apiFetch(`/api/workout/stats?start=${start}&end=${end}`).then(r => r.json())
-      setStats(res)
-    } catch {}
-  }
-
-  async function selectStatDate(date: string) {
-    if (date === selectedStatDate) { setSelectedStatDate(null); setDetailStats([]); return }
-    setSelectedStatDate(date)
-    try {
-      const res = await apiFetch(`/api/workout/stats/detail?date=${date}`).then(r => r.json())
-      setDetailStats(res)
-    } catch {}
+  // ── TTS ───────────────────────────────────────────────────────────
+  function speak(text: string) {
+    if (mutedRef.current) return
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'ko-KR'
+    u.rate = 0.95
+    u.volume = volumeRef.current
+    window.speechSynthesis.speak(u)
   }
 
   // ── 세트 증가 + TTS + 휴식 타이머 ──────────────────────────────────
-
-  async function increment(exerciseId: number) {
+  async function increment(exerciseId: number, fromTimer = false) {
     const ex = exercisesRef.current.find(e => e.id === exerciseId)
     if (!ex) return
+
+    // 수동 클릭 시 해당 운동의 운동 타이머 취소
+    if (!fromTimer && workoutTimer?.exerciseId === exerciseId) {
+      setWorkoutTimer(null)
+    }
+
     const res: WorkoutLog = await apiFetch(
       `/api/workout/logs/${exerciseId}/increment?date=${today}`,
       { method: 'POST' }
@@ -143,16 +147,58 @@ export default function WorkoutPage() {
 
     if (ex.restSeconds > 0) {
       alerted5Ref.current = false
-      setRestTimer({ name: ex.name, secondsLeft: ex.restSeconds, total: ex.restSeconds })
+      setRestTimer({ exerciseId: ex.id, name: ex.name, secondsLeft: ex.restSeconds, total: ex.restSeconds })
     }
 
     loadStats()
   }
 
-  // ── 휴식 타이머 카운트다운 ────────────────────────────────────────
-
+  // ── 운동 타이머 카운트다운 ────────────────────────────────────────
   useEffect(() => {
-    if (!restTimer || restTimer.secondsLeft <= 0) return
+    if (!workoutTimer) return
+    if (workoutTimer.secondsLeft <= 0) {
+      const exerciseId = workoutTimer.exerciseId
+      setWorkoutTimer(null)
+      increment(exerciseId, true)
+      return
+    }
+    const id = setTimeout(() => {
+      setWorkoutTimer(prev => {
+        if (!prev) return null
+        const next = prev.secondsLeft - 1
+        if (next === 30 && !alerted30Ref.current) {
+          alerted30Ref.current = true
+          speak('30초 남았습니다')
+        }
+        if (next === 10 && !alerted10Ref.current) {
+          alerted10Ref.current = true
+          speak('10초 남았습니다')
+        }
+        return { ...prev, secondsLeft: next }
+      })
+    }, 1000)
+    return () => clearTimeout(id)
+  }, [workoutTimer?.secondsLeft])
+
+  // ── 휴식 타이머 카운트다운 ────────────────────────────────────────
+  useEffect(() => {
+    if (!restTimer) return
+    if (restTimer.secondsLeft <= 0) {
+      const { exerciseId } = restTimer
+      setRestTimer(null)
+      // 세트가 남아있고 운동 시간이 설정된 경우 자동으로 다음 세트 타이머 시작
+      const ex = exercisesRef.current.find(e => e.id === exerciseId)
+      if (ex && ex.durationSeconds > 0) {
+        const log = logsRef.current.find(l => l.exerciseId === exerciseId)
+        const completed = log?.completedSets ?? 0
+        if (completed < ex.totalSets) {
+          alerted30Ref.current = false
+          alerted10Ref.current = false
+          setWorkoutTimer({ exerciseId: ex.id, name: ex.name, secondsLeft: ex.durationSeconds, total: ex.durationSeconds })
+        }
+      }
+      return
+    }
     const id = setTimeout(() => {
       setRestTimer(prev => {
         if (!prev) return null
@@ -161,15 +207,21 @@ export default function WorkoutPage() {
           alerted5Ref.current = true
           speak('5초 뒤 휴식 종료입니다')
         }
-        if (next <= 0) return null
         return { ...prev, secondsLeft: next }
       })
     }, 1000)
     return () => clearTimeout(id)
   }, [restTimer?.secondsLeft])
 
-  // ── 음성인식 ──────────────────────────────────────────────────────
+  // ── 운동 타이머 시작 ──────────────────────────────────────────────
+  function startWorkoutTimer(ex: Exercise) {
+    if (!ex.durationSeconds || ex.durationSeconds <= 0) return
+    alerted30Ref.current = false
+    alerted10Ref.current = false
+    setWorkoutTimer({ exerciseId: ex.id, name: ex.name, secondsLeft: ex.durationSeconds, total: ex.durationSeconds })
+  }
 
+  // ── 음성인식 ──────────────────────────────────────────────────────
   function toggleMic() { micOnRef.current ? stopMic() : startMic() }
 
   function startMic() {
@@ -210,17 +262,22 @@ export default function WorkoutPage() {
   }
 
   // ── 운동 CRUD ──────────────────────────────────────────────────────
-
   async function addExercise() {
     if (!newEx.name.trim()) return
     const res: Exercise = await apiFetch('/api/workout/exercises', {
       method: 'POST',
-      body: JSON.stringify({ name: newEx.name, totalSets: newEx.totalSets, orderIndex: 0, restSeconds: newEx.restSeconds }),
+      body: JSON.stringify({
+        name: newEx.name,
+        totalSets: newEx.totalSets,
+        orderIndex: 0,
+        restSeconds: newEx.restSeconds,
+        durationSeconds: newEx.durationSeconds,
+      }),
     }).then(r => r.json())
     const updated = [...exercisesRef.current, res]
     setExercises(updated)
     exercisesRef.current = updated
-    setNewEx({ name: '', totalSets: 3, restSeconds: 60 })
+    setNewEx({ name: '', totalSets: 3, restSeconds: 60, durationSeconds: 0 })
     setShowAddForm(false)
   }
 
@@ -232,13 +289,15 @@ export default function WorkoutPage() {
     exercisesRef.current = updated
     setLogs(prev => prev.filter(l => l.exerciseId !== id))
     if (selectedEx?.id === id) setSelectedEx(null)
+    if (workoutTimer?.exerciseId === id) setWorkoutTimer(null)
+    if (restTimer?.exerciseId === id) setRestTimer(null)
   }
 
-  // ── 운동 모달 (동영상 + 휴식) ─────────────────────────────────────
-
+  // ── 운동 모달 ─────────────────────────────────────────────────────
   function openExModal(ex: Exercise) {
     setSelectedEx(ex)
     setRestInput(ex.restSeconds)
+    setDurationInput(ex.durationSeconds)
     setVideoUrl('')
     setVideoLoading(true)
     apiFetch(`/api/workout/exercises/${ex.id}/video`).then(r => r.json())
@@ -247,11 +306,17 @@ export default function WorkoutPage() {
       .finally(() => setVideoLoading(false))
   }
 
-  async function saveRestSeconds() {
+  async function saveSettings() {
     if (!selectedEx) return
     const res: Exercise = await apiFetch(`/api/workout/exercises/${selectedEx.id}`, {
       method: 'PUT',
-      body: JSON.stringify({ name: selectedEx.name, totalSets: selectedEx.totalSets, orderIndex: selectedEx.orderIndex, restSeconds: restInput }),
+      body: JSON.stringify({
+        name: selectedEx.name,
+        totalSets: selectedEx.totalSets,
+        orderIndex: selectedEx.orderIndex,
+        restSeconds: restInput,
+        durationSeconds: durationInput,
+      }),
     }).then(r => r.json())
     const updated = exercisesRef.current.map(e => e.id === res.id ? res : e)
     setExercises(updated)
@@ -272,7 +337,37 @@ export default function WorkoutPage() {
     }
   }
 
-  // ── 통계 헬퍼 ─────────────────────────────────────────────────────
+  // ── 통계 ─────────────────────────────────────────────────────────
+  function getStatRange() {
+    if (statsMode === 'week') {
+      const end = new Date()
+      end.setDate(end.getDate() + weekOffset * 7)
+      const start = new Date(end)
+      start.setDate(start.getDate() - 6)
+      return { start: fmt(start), end: fmt(end) }
+    } else {
+      const first = fmt(new Date(monthCursor.year, monthCursor.month, 1))
+      const last = fmt(new Date(monthCursor.year, monthCursor.month + 1, 0))
+      return { start: first, end: last <= today ? last : today }
+    }
+  }
+
+  async function loadStats() {
+    const { start, end } = getStatRange()
+    try {
+      const res = await apiFetch(`/api/workout/stats?start=${start}&end=${end}`).then(r => r.json())
+      setStats(res)
+    } catch {}
+  }
+
+  async function selectStatDate(date: string) {
+    if (date === selectedStatDate) { setSelectedStatDate(null); setDetailStats([]); return }
+    setSelectedStatDate(date)
+    try {
+      const res = await apiFetch(`/api/workout/stats/detail?date=${date}`).then(r => r.json())
+      setDetailStats(res)
+    } catch {}
+  }
 
   function getCompleted(exerciseId: number) {
     return logs.find(l => l.exerciseId === exerciseId)?.completedSets ?? 0
@@ -291,10 +386,7 @@ export default function WorkoutPage() {
     return `${monthCursor.year}년 ${monthCursor.month + 1}월`
   }
 
-  // ── 월간 캘린더 셀 ────────────────────────────────────────────────
-
   function monthCalendarCells() {
-    const { start } = getStatRange()
     const firstDay = new Date(monthCursor.year, monthCursor.month, 1)
     const startOffset = firstDay.getDay()
     const daysInMonth = new Date(monthCursor.year, monthCursor.month + 1, 0).getDate()
@@ -331,8 +423,47 @@ export default function WorkoutPage() {
             <h2 className="text-xl font-bold">운동</h2>
             <p className="text-sm text-gray-500 mt-0.5">{today}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {flash && <span className="text-sm text-emerald-400 font-medium animate-pulse">{flash}</span>}
+
+            {/* TTS 볼륨 컨트롤 */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setMuted(v => !v)}
+                title={muted ? '음소거 해제' : '음소거'}
+                className="text-base text-gray-400 hover:text-white transition-colors cursor-pointer w-6 text-center leading-none"
+              >
+                {muted ? '🔇' : volume >= 0.6 ? '🔊' : volume > 0 ? '🔉' : '🔈'}
+              </button>
+              <div className="relative w-16 h-4">
+                <svg
+                  viewBox="0 0 64 16"
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <clipPath id="vol-clip">
+                      <rect x="0" y="0" width={muted ? 0 : volume * 64} height="16" />
+                    </clipPath>
+                  </defs>
+                  {/* 삼각형 배경 */}
+                  <polygon points="0,16 64,16 64,0" fill="#374151" />
+                  {/* 볼륨 채운 삼각형 */}
+                  <polygon points="0,16 64,16 64,0" fill="#6366f1" clipPath="url(#vol-clip)" />
+                </svg>
+                <input
+                  type="range" min="0" max="1" step="0.05"
+                  value={muted ? 0 : volume}
+                  onChange={e => {
+                    const v = Number(e.target.value)
+                    setVolume(v > 0 ? v : 0.05)
+                    setMuted(v === 0)
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
+            </div>
+
             <button
               onClick={toggleMic}
               title={micOn ? '마이크 끄기' : '상시 음성인식 켜기'}
@@ -346,14 +477,39 @@ export default function WorkoutPage() {
           </div>
         </div>
 
+        {/* ── 운동 타이머 배너 ── */}
+        {workoutTimer && (
+          <div className="mb-3 bg-amber-950 border border-amber-800 rounded-xl px-4 py-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-semibold text-amber-300">💪 {workoutTimer.name} 운동 중</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-lg font-mono font-bold ${workoutTimer.secondsLeft <= 10 ? 'text-red-400 animate-pulse' : workoutTimer.secondsLeft <= 30 ? 'text-amber-400' : 'text-white'}`}>
+                  {formatTime(workoutTimer.secondsLeft)}
+                </span>
+                <button
+                  onClick={() => setWorkoutTimer(null)}
+                  title="타이머 중지"
+                  className="text-gray-600 hover:text-gray-300 text-xs cursor-pointer px-1"
+                >■</button>
+              </div>
+            </div>
+            <div className="w-full h-1.5 bg-amber-900 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-amber-400 transition-all duration-1000"
+                style={{ width: `${(workoutTimer.secondsLeft / workoutTimer.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* ── 휴식 타이머 배너 ── */}
         {restTimer && (
           <div className="mb-3 bg-indigo-950 border border-indigo-800 rounded-xl px-4 py-3">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-sm font-semibold text-indigo-300">💤 {restTimer.name} 휴식 중</span>
               <div className="flex items-center gap-2">
-                <span className={`text-lg font-mono font-bold ${restTimer.secondsLeft <= 5 ? 'text-red-400' : 'text-white'}`}>
-                  {restTimer.secondsLeft}초
+                <span className={`text-lg font-mono font-bold ${restTimer.secondsLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                  {formatTime(restTimer.secondsLeft)}
                 </span>
                 <button onClick={() => setRestTimer(null)} className="text-gray-600 hover:text-gray-300 text-xs cursor-pointer">✕</button>
               </div>
@@ -381,7 +537,7 @@ export default function WorkoutPage() {
                 autoFocus
               />
             </div>
-            <div className="w-20">
+            <div className="w-16">
               <label className="text-xs text-gray-500 mb-1 block">세트</label>
               <input type="number" min={1} max={30}
                 className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
@@ -389,7 +545,15 @@ export default function WorkoutPage() {
                 onChange={e => setNewEx(v => ({ ...v, totalSets: Number(e.target.value) }))}
               />
             </div>
-            <div className="w-24">
+            <div className="w-20">
+              <label className="text-xs text-gray-500 mb-1 block">운동(초)</label>
+              <input type="number" min={0} max={3600}
+                className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                value={newEx.durationSeconds}
+                onChange={e => setNewEx(v => ({ ...v, durationSeconds: Number(e.target.value) }))}
+              />
+            </div>
+            <div className="w-20">
               <label className="text-xs text-gray-500 mb-1 block">휴식(초)</label>
               <input type="number" min={0} max={600}
                 className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
@@ -417,17 +581,16 @@ export default function WorkoutPage() {
             {exercises.map(ex => {
               const completed = getCompleted(ex.id)
               const done = completed >= ex.totalSets
+              const isTimerRunning = workoutTimer?.exerciseId === ex.id
               return (
-                <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3">
+                <div
+                  key={ex.id}
+                  className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 cursor-pointer hover:border-gray-700 transition-colors"
+                  onClick={() => openExModal(ex)}
+                >
                   <div className="flex items-center gap-3 flex-wrap">
-                    <button
-                      onClick={() => openExModal(ex)}
-                      className="text-sm font-semibold text-white w-28 shrink-0 truncate text-left hover:text-indigo-300 transition-colors cursor-pointer"
-                      title="동영상 / 설정"
-                    >
-                      {ex.name}
-                    </button>
-                    <div className="flex flex-wrap gap-1.5 flex-1">
+                    <span className="text-sm font-semibold text-white w-24 shrink-0 truncate">{ex.name}</span>
+                    <div className="flex flex-wrap gap-1.5 flex-1" onClick={e => e.stopPropagation()}>
                       {Array.from({ length: ex.totalSets }, (_, i) => (
                         <button
                           key={i}
@@ -443,7 +606,26 @@ export default function WorkoutPage() {
                     <span className={`text-xs shrink-0 font-mono ${done ? 'text-emerald-400' : 'text-gray-500'}`}>
                       {completed}/{ex.totalSets}
                     </span>
-                    <button onClick={() => deleteExercise(ex.id)} className="text-gray-700 hover:text-red-400 text-xs cursor-pointer shrink-0">✕</button>
+                    {ex.durationSeconds > 0 && !done && (
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          isTimerRunning ? setWorkoutTimer(null) : startWorkoutTimer(ex)
+                        }}
+                        title={isTimerRunning ? '타이머 중지' : `${formatTime(ex.durationSeconds)} 운동 시작`}
+                        className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-full border text-xs font-bold transition-all cursor-pointer
+                          ${isTimerRunning
+                            ? 'border-amber-500 text-amber-400 bg-amber-950 animate-pulse'
+                            : 'border-gray-700 hover:border-amber-500 text-gray-500 hover:text-amber-400'
+                          }`}
+                      >
+                        {isTimerRunning ? '■' : '▶'}
+                      </button>
+                    )}
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteExercise(ex.id) }}
+                      className="text-gray-700 hover:text-red-400 text-xs cursor-pointer shrink-0"
+                    >✕</button>
                   </div>
                 </div>
               )
@@ -485,21 +667,33 @@ export default function WorkoutPage() {
                 </button>
               </div>
 
-              {/* 휴식 시간 */}
-              <div className="space-y-2">
-                <p className="text-xs text-gray-500 font-medium">세트 후 휴식 시간</p>
-                <div className="flex gap-2">
-                  <input type="number" min={0} max={600}
-                    className="flex-1 bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
-                    value={restInput}
-                    onChange={e => setRestInput(Number(e.target.value))}
-                  />
-                  <span className="flex items-center text-sm text-gray-500">초</span>
-                  <button onClick={saveRestSeconds}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium cursor-pointer">
-                    저장
-                  </button>
+              {/* 타이머 설정 */}
+              <div className="space-y-3">
+                <p className="text-xs text-gray-500 font-medium">타이머 설정</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">운동 시간(초)</label>
+                    <input type="number" min={0} max={3600}
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                      value={durationInput}
+                      onChange={e => setDurationInput(Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600 mb-1 block">휴식 시간(초)</label>
+                    <input type="number" min={0} max={600}
+                      className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                      value={restInput}
+                      onChange={e => setRestInput(Number(e.target.value))}
+                    />
+                  </div>
                 </div>
+                <button
+                  onClick={saveSettings}
+                  className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium cursor-pointer"
+                >
+                  저장
+                </button>
               </div>
             </div>
           </div>
@@ -604,19 +798,34 @@ export default function WorkoutPage() {
 
           {/* 날짜별 세부 통계 */}
           {selectedStatDate && detailStats.length > 0 && (
-            <div className="mt-4 bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-2">
-              <p className="text-xs text-gray-500 font-medium mb-3">{selectedStatDate} 세부</p>
+            <div className="mt-4 bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
+              <p className="text-xs text-gray-500 font-medium">{selectedStatDate} 세부</p>
               {detailStats.map(s => {
                 const rate = Math.round(s.completionRate)
                 return (
-                  <div key={s.exerciseId}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-white">{s.name}</span>
-                      <span className={`text-xs font-mono ${rate >= 100 ? 'text-emerald-400' : rate > 0 ? 'text-indigo-400' : 'text-gray-600'}`}>
-                        {s.completedSets}/{s.totalSets} ({rate}%)
+                  <div key={s.exerciseId} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-white">{s.name}</span>
+                      <span className={`text-xs font-mono font-bold ${rate >= 100 ? 'text-emerald-400' : rate > 0 ? 'text-indigo-400' : 'text-gray-600'}`}>
+                        {s.completedSets}/{s.totalSets}세트
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                    {/* 세트 시각화 */}
+                    <div className="flex gap-1 flex-wrap">
+                      {Array.from({ length: s.totalSets }, (_, i) => (
+                        <div
+                          key={i}
+                          className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold
+                            ${i < s.completedSets
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-gray-800 text-gray-600'
+                            }`}
+                        >
+                          {i + 1}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${rate >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
                         style={{ width: `${rate}%` }}

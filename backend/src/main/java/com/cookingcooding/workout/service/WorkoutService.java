@@ -59,6 +59,7 @@ public class WorkoutService {
                 .totalSets(req.totalSets())
                 .orderIndex(orderIndex)
                 .restSeconds(req.restSeconds() > 0 ? req.restSeconds() : 60)
+                .durationSeconds(Math.max(req.durationSeconds(), 0))
                 .build();
         return ExerciseResponse.of(exerciseRepository.save(exercise));
     }
@@ -70,6 +71,7 @@ public class WorkoutService {
         exercise.setTotalSets(req.totalSets());
         exercise.setOrderIndex(req.orderIndex());
         exercise.setRestSeconds(req.restSeconds() > 0 ? req.restSeconds() : 60);
+        exercise.setDurationSeconds(Math.max(req.durationSeconds(), 0));
         return ExerciseResponse.of(exerciseRepository.save(exercise));
     }
 

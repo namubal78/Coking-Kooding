@@ -22,4 +22,7 @@ public class Exercise {
 
     @Column(nullable = false)
     private int restSeconds;
+
+    @Column(nullable = false)
+    private int durationSeconds;
 }
