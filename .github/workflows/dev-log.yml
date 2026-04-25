@@ -13,9 +13,11 @@ jobs:
           fetch-depth: 2
 
       - name: Wait for Render deploy to complete
-        run: sleep 180
+        run: sleep 120
 
       - name: Send commit to dev log
+        id: devlog
+        continue-on-error: true
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
           AUTHOR=$(git log -1 --pretty=%an)
@@ -33,12 +35,49 @@ jobs:
             --arg diff "$RAW_DIFF" \
             '{commitMessage:$commitMessage,author:$author,sha:$sha,changedFiles:$changedFiles,timestamp:$timestamp,diff:$diff}')
 
-          curl -s -X POST "${{ secrets.API_URL }}/api/dev-logs/webhook" \
+          HTTP_CODE=$(curl -s -o /tmp/devlog_response.txt -w "%{http_code}" \
+            -X POST "${{ secrets.API_URL }}/api/dev-logs/webhook" \
             -H "Content-Type: application/json" \
             -H "X-Webhook-Secret: ${{ secrets.WEBHOOK_SECRET }}" \
+            -d "$PAYLOAD")
+
+          echo "HTTP_CODE=$HTTP_CODE" >> "$GITHUB_OUTPUT"
+          cat /tmp/devlog_response.txt
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Dev log webhook failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Slack 드래프트 실패 알림
+        if: steps.devlog.outcome == 'failure'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ]; then exit 0; fi
+          COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
+          SHA=$(git log -1 --pretty=%H | cut -c1-7)
+          HTTP_CODE="${{ steps.devlog.outputs.HTTP_CODE }}"
+          RESPONSE=$(cat /tmp/devlog_response.txt 2>/dev/null | head -c 800)
+          PAYLOAD=$(jq -n \
+            --arg channel "$SLACK_CHANNEL_ID" \
+            --arg sha "$SHA" \
+            --arg msg "$COMMIT_MSG" \
+            --arg code "$HTTP_CODE" \
+            --arg log "$RESPONSE" \
+            '{
+              channel: $channel,
+              text: ("❌ 드래프트 생성 실패 [" + $sha + "] " + $msg),
+              attachments: [{color: "danger", title: ("HTTP " + $code), text: $log}]
+            }')
+          curl -s -X POST "https://slack.com/api/chat.postMessage" \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json; charset=utf-8" \
             -d "$PAYLOAD"
 
       - name: Slack 배포 알림
+        if: steps.devlog.outcome == 'success'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}

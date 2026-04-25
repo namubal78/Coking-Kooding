@@ -17,6 +17,7 @@ const WORLD_LINKS = [
   { href: '/world/workout', label: '운동' },
   { href: '/world/photos', label: '앨범' },
   { href: '/world/draft', label: '드래프트' },
+  { href: '/world/chat', label: '채팅' },
 ]
 
 export default function Navbar() {
