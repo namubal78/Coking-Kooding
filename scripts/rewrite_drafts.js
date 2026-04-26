@@ -2,18 +2,18 @@
 /**
  * 기존 dev_log 항목 전체를 현재 프롬프트 품질로 재작성하는 스크립트
  *
- * 실행 전 환경변수 설정:
- *   export ANTHROPIC_API_KEY=sk-ant-...
- *   export API_URL=https://coking-cooding-api.onrender.com
- *   export WEBHOOK_SECRET=...
- *   export JWT_TOKEN=...   (로그인 후 localStorage의 token 값)
+ * 실행 전 환경변수 설정 (PowerShell):
+ *   $env:ANTHROPIC_API_KEY = "sk-ant-..."
+ *   $env:API_URL = "https://coking-cooding-api.onrender.com"
+ *   $env:WEBHOOK_SECRET = "..."
+ *   $env:JWT_TOKEN = "eyJ..."
  *
  * 실행:
  *   node scripts/rewrite_drafts.js
- *   node scripts/rewrite_drafts.js --dry-run   (API 호출 없이 SHA 추출만 확인)
+ *   node scripts/rewrite_drafts.js --dry-run
  */
 
-import { execSync } from 'child_process'
+const { execSync } = require('child_process')
 
 const {
   ANTHROPIC_API_KEY,
