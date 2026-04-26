@@ -51,7 +51,7 @@ function markdownToPlainHtml(text: string): string {
     .replace(/`(.+?)`/g, '<code>$1</code>')
     .replace(/^---$/gm, '<hr/>')
     .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/(<li>[\s\S]*<\/li>)/g, '<ul>$1</ul>')
     .replace(/\n/g, '<br/>')
 }
 
