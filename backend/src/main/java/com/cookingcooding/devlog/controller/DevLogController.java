@@ -43,4 +43,17 @@ public class DevLogController {
         devLogService.receiveCommit(req);
         return ResponseEntity.ok(Map.of("status", "ok"));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateContent(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-Webhook-Secret", required = false) String secret,
+            @RequestBody Map<String, String> body
+    ) {
+        if (webhookSecret.isBlank() || !webhookSecret.equals(secret)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+        devLogService.updateContent(id, body.get("content"));
+        return ResponseEntity.ok(Map.of("status", "ok"));
+    }
 }

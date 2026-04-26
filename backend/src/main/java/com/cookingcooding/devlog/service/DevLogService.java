@@ -80,7 +80,7 @@ public class DevLogService {
 
         String prompt = """
                 다음 커밋 정보와 실제 코드 diff를 바탕으로 심층 기술 개발 일지를 한국어로 작성해줘.
-                diff를 직접 분석해서 실제 코드 변경 내용을 정확히 반영하고, A4 기준 3페이지 분량으로 충분히 깊게 서술해줘.
+                diff를 직접 분석해서 실제 변경 내용을 정확히 반영하고, A4 기준 1.5페이지 분량으로 압축적이고 밀도 있게 서술해줘.
                 단순 설명이 아니라 "왜 이 선택인가", "어떤 대안이 있었는가", "트레이드오프는 무엇인가"를 중심으로 작성해줘.
 
                 커밋 메시지: %s
@@ -97,51 +97,38 @@ public class DevLogService {
                 아래 형식을 정확히 따라줘:
 
                 ## 이슈 및 문제상황
-                (어떤 상황에서, 왜 이 변경이 필요했는지 3~5문장. 기존 코드의 한계나 불편함을 구체적으로)
+                (왜 이 변경이 필요했는지 2~3문장. 기존 코드의 한계를 구체적으로)
 
                 ## 커밋 요약
-                (무엇을 어떻게 했는지 3~4문장. 기술적으로 구체적으로)
+                (무엇을 어떻게 했는지 2~3문장. 기술적으로 구체적으로)
 
                 ## 주요 변경사항
-                (변경된 각 파일별 기술적 핵심 내용. diff를 참고해서 실제 변경 내용 기재)
-                - `파일명`: 변경 내용 (2~3줄로 상세히)
+                - `파일명`: 변경 핵심 내용 (1~2줄)
 
                 %s
 
                 ## 기술 선택 배경 및 트레이드오프
-                (이 커밋에서 이루어진 주요 기술 결정을 각각 분석. 예: 왜 이 방식인가, 어떤 대안이 있었는가)
+                (핵심 기술 결정 1~2개만)
 
-                ### [결정 1: 선택한 기술/방식]
-                **선택한 이유**: (2~3문장)
-                **대안들**:
-                - `대안A`: 장점 — ... / 단점 — ... / 선택하지 않은 이유 — ...
-                - `대안B`: 장점 — ... / 단점 — ... / 선택하지 않은 이유 — ...
-                **트레이드오프 요약**: (이 선택으로 얻은 것과 포기한 것 각 1~2문장)
-
-                (결정이 여러 개면 반복)
+                ### [결정: 선택한 기술/방식]
+                **선택한 이유**: (1~2문장)
+                **대안**: `대안A` — 장점/단점/선택 안 한 이유 각 한 줄
+                **트레이드오프**: 얻은 것과 포기한 것 각 1문장
 
                 ## 기술 개념 심층 분석
-                (이 커밋에서 등장한 기술 키워드 3~5개를 각각 아래 형식으로 깊이 분석.
-                단순 정의가 아니라: 내부 동작 원리 → 이 프로젝트에서 어떻게 적용됐는지 → 주의해야 할 점 순서로)
+                (핵심 키워드 2~3개)
 
                 ### [키워드명]
-                (이 기술이 무엇인지, 어떤 문제를 해결하는지, 내부적으로 어떻게 동작하는지 5~8문장으로 상세히.
-                이 프로젝트의 코드 맥락에서 구체적인 적용 사례를 들어 설명)
-                - **[핵심 개념 A]**: 2~3문장 상세 설명
-                - **[핵심 개념 B]**: 2~3문장 상세 설명
-                - **[핵심 개념 C]**: 2~3문장 상세 설명
-                - **장점**: 이 기술을 쓸 때 얻는 구체적 이점
-                - **단점/주의점**: 이 기술의 한계나 실수하기 쉬운 부분
+                (동작 원리와 이 프로젝트에서의 적용 3~5문장)
+                - **[핵심 개념]**: 1~2문장
+                - **장점**: 구체적 이점 한 줄
+                - **주의점**: 한계나 주의사항 한 줄
 
-                (키워드 3~5개 반복)
-
-                ## 세부 설정 및 구성 포인트
-                (이 커밋에서 추가되거나 변경된 설정값, 어노테이션, 옵션들을 설명.
-                "이 값을 왜 이렇게 설정했는가"를 중심으로)
-                - `설정항목`: 값 — 이유와 다른 값을 썼을 때 어떻게 달라지는지
+                ## 세부 설정 포인트
+                - `설정항목`: 값 — 이유와 다른 값을 썼을 때 차이 한 줄
 
                 ## 결과
-                정상 처리됨 / 이슈 발생 등 한 줄로 작성
+                정상 처리됨 / 이슈 발생 등 한 줄
                 """.formatted(commitMessage, author, sha, files, req.timestamp(), diff, beforeAfterInstruction);
 
         HttpHeaders headers = new HttpHeaders();
@@ -151,7 +138,7 @@ public class DevLogService {
 
         Map<String, Object> body = Map.of(
                 "model", MODEL,
-                "max_tokens", 4096,
+                "max_tokens", 5500,
                 "messages", List.of(Map.of("role", "user", "content", prompt))
         );
 
@@ -191,8 +178,8 @@ public class DevLogService {
             for (String file : targets) {
                 String filename = file.contains("/") ? file.substring(file.lastIndexOf('/') + 1) : file;
                 sb.append("## BEFORE / AFTER — `").append(filename).append("`\n");
-                sb.append("```before\n(diff의 - 라인을 참고해서 이 파일의 변경 전 핵심 코드 2~5줄)\n```\n");
-                sb.append("```after\n(diff의 + 라인을 참고해서 이 파일의 변경 후 핵심 코드 2~5줄)\n```\n\n");
+                sb.append("```before\n(diff의 - 라인을 참고해서 변경 전 핵심 코드 2~3줄)\n```\n");
+                sb.append("```after\n(diff의 + 라인을 참고해서 변경 후 핵심 코드 2~3줄)\n```\n\n");
             }
             return sb.toString();
         }
@@ -204,11 +191,19 @@ public class DevLogService {
         return """
                 ## BEFORE / AFTER
                 ```before
-                (diff의 - 라인을 참고해서 변경 전 핵심 코드 2~5줄)
+                (diff의 - 라인을 참고해서 변경 전 핵심 코드 2~3줄)
                 ```
                 ```after
-                (diff의 + 라인을 참고해서 변경 후 핵심 코드 2~5줄)
+                (diff의 + 라인을 참고해서 변경 후 핵심 코드 2~3줄)
                 ```
                 """;
+    }
+
+    public void updateContent(Long id, String content) {
+        DevLog log = devLogRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("No log for id: " + id));
+        log.setContent(content);
+        log.setUpdatedAt(LocalDateTime.now());
+        devLogRepository.save(log);
     }
 }
