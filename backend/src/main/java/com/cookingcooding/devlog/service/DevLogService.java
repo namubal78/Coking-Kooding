@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -42,25 +43,32 @@ public class DevLogService {
 
     public void receiveCommit(DevLogWebhookRequest req) {
         String summary = generateSummary(req);
-        LocalDate today = LocalDate.now();
+        LocalDate logDate = parseLogDate(req.timestamp());
         LocalDateTime now = LocalDateTime.now();
 
-        devLogRepository.findByLogDate(today).ifPresentOrElse(log -> {
+        devLogRepository.findByLogDate(logDate).ifPresentOrElse(log -> {
             int commitCount = countCommits(log.getContent()) + 1;
-            log.setTitle(today + " 개발 일지 (" + commitCount + "건)");
+            log.setTitle(logDate + " 개발 일지 (" + commitCount + "건)");
             log.setContent(log.getContent() + "\n\n---\n\n" + summary);
             log.setUpdatedAt(now);
             devLogRepository.save(log);
         }, () -> {
             DevLog log = DevLog.builder()
-                    .logDate(today)
-                    .title(today + " 개발 일지 (1건)")
+                    .logDate(logDate)
+                    .title(logDate + " 개발 일지 (1건)")
                     .content(summary)
                     .createdAt(now)
                     .updatedAt(now)
                     .build();
             devLogRepository.save(log);
         });
+    }
+
+    private LocalDate parseLogDate(String timestamp) {
+        if (timestamp != null && !timestamp.isBlank()) {
+            try { return OffsetDateTime.parse(timestamp).toLocalDate(); } catch (Exception ignored) {}
+        }
+        return LocalDate.now();
     }
 
     private int countCommits(String content) {
