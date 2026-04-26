@@ -79,6 +79,8 @@ export default function WorkoutPage() {
   const [detailStats, setDetailStats] = useState<DetailStat[]>([])
 
   // ── Ref 동기화 ───────────────────────────────────────────────────
+  // TTS speak()와 타이머 콜백은 클로저로 캡처된 초기값을 바라본다(stale closure 문제).
+  // Ref에 최신값을 동기화해두면 이벤트 핸들러가 항상 현재 volume/muted/logs를 읽을 수 있다.
   useEffect(() => { volumeRef.current = volume }, [volume])
   useEffect(() => { mutedRef.current = muted }, [muted])
   useEffect(() => { logsRef.current = logs }, [logs])
@@ -154,6 +156,9 @@ export default function WorkoutPage() {
   }
 
   // ── 운동 타이머 카운트다운 ────────────────────────────────────────
+  // 의존성을 workoutTimer?.secondsLeft 하나로 제한하는 이유:
+  // workoutTimer 객체 전체를 dep로 쓰면 setWorkoutTimer 호출마다 새 객체가 생성되어 무한루프가 된다.
+  // secondsLeft만 추적하면 1초마다 정확히 한 번씩 실행된다.
   useEffect(() => {
     if (!workoutTimer) return
     if (workoutTimer.secondsLeft <= 0) {
@@ -186,7 +191,9 @@ export default function WorkoutPage() {
     if (restTimer.secondsLeft <= 0) {
       const { exerciseId } = restTimer
       setRestTimer(null)
-      // 세트가 남아있고 운동 시간이 설정된 경우 자동으로 다음 세트 타이머 시작
+      // 휴식 종료 후 자동 운동 타이머 시작 조건: durationSeconds가 설정되어 있고 세트가 남은 경우.
+      // logsRef를 쓰는 이유: 이 클로저는 restTimer 변경 시점의 logs를 캡처하므로
+      // 최신 completedSets를 읽으려면 Ref가 필요하다.
       const ex = exercisesRef.current.find(e => e.id === exerciseId)
       if (ex && ex.durationSeconds > 0) {
         const log = logsRef.current.find(l => l.exerciseId === exerciseId)

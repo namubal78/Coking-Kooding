@@ -18,6 +18,9 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [connected, setConnected] = useState(false)
   const [myEmail, setMyEmail] = useState('')
+  // Client를 useState가 아닌 useRef로 관리하는 이유:
+  // STOMP Client 객체는 렌더링과 무관한 외부 리소스다. useState에 넣으면 불필요한 리렌더링이 발생하고
+  // 클로저 캡처 문제로 stale 참조가 생길 수 있다.
   const clientRef = useRef<Client | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -34,6 +37,7 @@ export default function ChatPage() {
       .catch(() => {})
 
     const client = new Client({
+      // JWT를 ?token= 쿼리 파라미터로 전달: 브라우저 WS API는 Upgrade 요청에 커스텀 헤더를 설정할 수 없다.
       webSocketFactory: () => new SockJS(`${API_URL}/ws?token=${token}`),
       reconnectDelay: 5000,
       onConnect: () => setConnected(true),
@@ -41,6 +45,8 @@ export default function ChatPage() {
       onStompError: () => setConnected(false),
     })
 
+    // 생성자의 onConnect를 덮어쓰는 이유: subscribe()를 onConnect 콜백 안에서 호출해야
+    // 연결이 확립된 후에 구독이 등록된다. 재연결 시에도 이 콜백이 다시 호출되어 구독이 복원된다.
     client.onConnect = () => {
       setConnected(true)
       client.subscribe('/topic/messages', (frame) => {
