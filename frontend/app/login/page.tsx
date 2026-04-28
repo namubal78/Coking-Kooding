@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -21,7 +22,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8 text-center">
 
         <div className="space-y-2">
-          <div className="text-5xl">🏠</div>
+          <Image src="/favicon.ico" alt="CokingCooding" width={40} height={40} className="mx-auto rounded-sm" />
           <h1 className="text-2xl font-bold">
             Coking<span className="text-indigo-400">Cooding</span>
           </h1>

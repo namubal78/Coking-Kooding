@@ -95,7 +95,7 @@ export default function ChatPage() {
   let lastDate = ''
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-gray-950">
+    <div className="flex flex-col mt-16 h-[calc(100vh-6.5rem)] bg-gray-950">
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-3 border-b border-gray-800 bg-gray-900/60 backdrop-blur">
         <div className="relative">

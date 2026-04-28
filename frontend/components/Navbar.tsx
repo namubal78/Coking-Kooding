@@ -11,15 +11,6 @@ const PUBLIC_LINKS = [
   { href: '/demo', label: '기능 데모' },
 ]
 
-const WORLD_LINKS = [
-  { href: '/world/dashboard', label: '홈' },
-  { href: '/world/planner', label: '플래너' },
-  { href: '/world/workout', label: '운동' },
-  { href: '/world/photos', label: '앨범' },
-  { href: '/world/draft', label: '드래프트' },
-  { href: '/world/chat', label: '채팅' },
-]
-
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
@@ -59,16 +50,6 @@ export default function Navbar() {
           </Link>
 
           {PUBLIC_LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`text-sm transition-colors ${isActive(l.href) ? 'text-indigo-400' : 'text-gray-400 hover:text-white'}`}
-            >
-              {l.label}
-            </Link>
-          ))}
-
-          {loggedIn && WORLD_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
