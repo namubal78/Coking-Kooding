@@ -16,7 +16,6 @@ self.addEventListener('activate', e => {
 })
 
 self.addEventListener('fetch', e => {
-  // API 요청은 캐시하지 않음
   if (e.request.url.includes('/api/')) return
 
   e.respondWith(
@@ -29,5 +28,36 @@ self.addEventListener('fetch', e => {
         return res
       })
       .catch(() => caches.match(e.request))
+  )
+})
+
+// 웹 푸시 수신 → 알림 표시
+self.addEventListener('push', e => {
+  let data = { title: 'CokingCooding', body: '새 메시지가 있습니다' }
+  try { data = e.data?.json() ?? data } catch {}
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/main.png',
+      badge: '/favicon.ico',
+      tag: 'chat-message',
+      renotify: true,
+      data: { url: '/world/chat' },
+    })
+  )
+})
+
+// 알림 클릭 → 채팅 페이지 열기
+self.addEventListener('notificationclick', e => {
+  e.notification.close()
+  const target = e.notification.data?.url || '/world/chat'
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const client of list) {
+        if (client.url.includes(target) && 'focus' in client) return client.focus()
+      }
+      return clients.openWindow(target)
+    })
   )
 })

@@ -25,6 +25,7 @@ public class MessengerService {
 
     private final MessageRepository messageRepository;
     private final MessageReadRepository messageReadRepository;
+    private final WebPushService webPushService;
 
     @Value("${supabase.url:}")
     private String supabaseUrl;
@@ -53,7 +54,10 @@ public class MessengerService {
                 .imageUrl(imageUrl)
                 .createdAt(LocalDateTime.now())
                 .build();
-        return MessageResponse.of(messageRepository.save(message));
+        MessageResponse saved = MessageResponse.of(messageRepository.save(message));
+        String preview = imageUrl != null ? null : content;
+        webPushService.sendToOthers(email, name, preview);
+        return saved;
     }
 
     public ReadPayload markRead(String email, Long lastId) {

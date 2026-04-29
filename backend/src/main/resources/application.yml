@@ -81,6 +81,11 @@ supabase:
 webhook:
   secret: ${WEBHOOK_SECRET:}
 
+vapid:
+  public-key: ${VAPID_PUBLIC_KEY:}
+  private-key: ${VAPID_PRIVATE_KEY:}
+  subject: ${VAPID_SUBJECT:mailto:namubal78@gmail.com}
+
 slack:
   bot-token: ${SLACK_BOT_TOKEN:}
   signing-secret: ${SLACK_SIGNING_SECRET:}
