@@ -9,6 +9,7 @@ type Item = {
   title: string
   description: string
   date: string
+  notifyAt?: string | null
 }
 
 const EVENT_COLORS = [
@@ -21,7 +22,7 @@ function eventColor(id: number) {
 }
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-const EMPTY_FORM = { title: '', description: '', date: '' }
+const EMPTY_FORM = { title: '', description: '', date: '', notifyAt: '' }
 
 export default function PlannerPage() {
   const [items, setItems] = useState<Item[]>([])
@@ -43,6 +44,7 @@ export default function PlannerPage() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [notifyEnabled, setNotifyEnabled] = useState(false)
   const [listening, setListening] = useState(false)
   const [voiceError, setVoiceError] = useState('')
   const recognitionRef = useRef<any>(null)
@@ -85,6 +87,7 @@ export default function PlannerPage() {
 
   function openNew(date: string) {
     setForm({ ...EMPTY_FORM, date })
+    setNotifyEnabled(false)
     setEditing(false)
     setSidebar('new')
     setSelected(null)
@@ -98,9 +101,21 @@ export default function PlannerPage() {
 
   function startEdit() {
     if (!selected) return
-    setForm({ title: selected.title, description: selected.description ?? '', date: selected.date })
+    const hasNotify = !!selected.notifyAt
+    setForm({ title: selected.title, description: selected.description ?? '', date: selected.date, notifyAt: selected.notifyAt ?? '' })
+    setNotifyEnabled(hasNotify)
     setEditing(true)
     setSidebar('new')
+  }
+
+  function autoNotifyAt(date: string): string {
+    if (!date) return ''
+    const d = new Date(date)
+    d.setDate(d.getDate() - 1)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}T09:00`
   }
 
   function startVoice() {
@@ -149,14 +164,15 @@ export default function PlannerPage() {
   async function save() {
     setSaving(true)
     try {
+      const payload = { ...form, notifyAt: notifyEnabled ? form.notifyAt || null : null }
       if (editing && selected) {
-        const updated = await apiFetch(`/api/planner/${selected.id}`, { method: 'PUT', body: JSON.stringify(form) }).then(r => r.json())
+        const updated = await apiFetch(`/api/planner/${selected.id}`, { method: 'PUT', body: JSON.stringify(payload) }).then(r => r.json())
         setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
         setSelected(updated)
         setEditing(false)
         setSidebar('detail')
       } else {
-        const created = await apiFetch('/api/planner', { method: 'POST', body: JSON.stringify(form) }).then(r => r.json())
+        const created = await apiFetch('/api/planner', { method: 'POST', body: JSON.stringify(payload) }).then(r => r.json())
         setItems(prev => [...prev, created])
         setSelected(created)
         setSidebar('detail')
@@ -378,6 +394,9 @@ export default function PlannerPage() {
                     <div className="min-w-0">
                       <p className="font-semibold text-white leading-snug">{selected.title}</p>
                       <p className="text-xs text-indigo-300 mt-1">{selected.date}</p>
+                      {selected.notifyAt && (
+                        <p className="text-xs text-amber-400 mt-0.5">🔔 {selected.notifyAt.replace('T', ' ')}</p>
+                      )}
                     </div>
                   </div>
                   {selected.description && (
@@ -408,7 +427,14 @@ export default function PlannerPage() {
                       type="date"
                       className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors [color-scheme:dark]"
                       value={form.date}
-                      onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                      onChange={e => {
+                        const newDate = e.target.value
+                        setForm(f => ({
+                          ...f,
+                          date: newDate,
+                          notifyAt: notifyEnabled && newDate ? autoNotifyAt(newDate) : f.notifyAt,
+                        }))
+                      }}
                     />
                   </div>
                   <div>
@@ -420,6 +446,31 @@ export default function PlannerPage() {
                       value={form.description}
                       onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                     />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={notifyEnabled}
+                        onChange={e => {
+                          const checked = e.target.checked
+                          setNotifyEnabled(checked)
+                          if (checked && form.date && !form.notifyAt) {
+                            setForm(f => ({ ...f, notifyAt: autoNotifyAt(form.date) }))
+                          }
+                        }}
+                        className="rounded accent-indigo-500 cursor-pointer"
+                      />
+                      <span className="text-xs text-gray-400">알림 설정</span>
+                    </label>
+                    {notifyEnabled && (
+                      <input
+                        type="datetime-local"
+                        className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors [color-scheme:dark]"
+                        value={form.notifyAt}
+                        onChange={e => setForm(f => ({ ...f, notifyAt: e.target.value }))}
+                      />
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button

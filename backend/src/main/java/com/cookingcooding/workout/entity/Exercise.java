@@ -1,5 +1,6 @@
 package com.cookingcooding.workout.entity;
 
+import com.cookingcooding.auth.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,4 +26,8 @@ public class Exercise {
 
     @Column(nullable = false)
     private int durationSeconds;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }

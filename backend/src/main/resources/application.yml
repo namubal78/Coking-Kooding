@@ -85,3 +85,15 @@ slack:
   bot-token: ${SLACK_BOT_TOKEN:}
   signing-secret: ${SLACK_SIGNING_SECRET:}
   channel-id: ${SLACK_CHANNEL_ID:}
+
+# 알림 수신 대상 (이메일 콤마 구분, 전화번호 하이픈 없이)
+notification:
+  emails: ${NOTIFICATION_EMAILS:namubal78@gmail.com,1993jhk@gmail.com}
+  phone: ${NOTIFICATION_PHONE:01099957146}
+
+# CoolSMS (https://coolsms.co.kr) — API 키 발급 후 Render 환경변수에 추가
+# COOLSMS_API_KEY / COOLSMS_API_SECRET / COOLSMS_SENDER(발신번호)
+coolsms:
+  api-key: ${COOLSMS_API_KEY:}
+  api-secret: ${COOLSMS_API_SECRET:}
+  sender: ${COOLSMS_SENDER:}

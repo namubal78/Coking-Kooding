@@ -1,5 +1,7 @@
 package com.cookingcooding.workout.service;
 
+import com.cookingcooding.auth.entity.User;
+import com.cookingcooding.auth.repository.UserRepository;
 import com.cookingcooding.workout.dto.*;
 import com.cookingcooding.workout.entity.Exercise;
 import com.cookingcooding.workout.entity.WorkoutLog;
@@ -10,6 +12,7 @@ import com.cookingcooding.workout.repository.WorkoutVideoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -30,6 +33,7 @@ public class WorkoutService {
     private final ExerciseRepository exerciseRepository;
     private final WorkoutLogRepository workoutLogRepository;
     private final WorkoutVideoRepository workoutVideoRepository;
+    private final UserRepository userRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${anthropic.api-key:}")
@@ -45,28 +49,46 @@ public class WorkoutService {
     private static final String MODEL = "claude-haiku-4-5-20251001";
     private static final String VIDEO_BUCKET = "workout-videos";
 
+    // ── Auth helpers ──────────────────────────────────────────────────
+
+    private String currentEmail() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    private User currentUser() {
+        return userRepository.findByEmail(currentEmail())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
+
+    private Exercise findExercise(Long id) {
+        return exerciseRepository.findByIdAndUserEmail(id, currentEmail())
+                .orElseThrow(() -> new IllegalArgumentException("운동을 찾을 수 없습니다."));
+    }
+
     // ── Exercise CRUD ──────────────────────────────────────────────────
 
     public List<ExerciseResponse> getExercises() {
-        return exerciseRepository.findAllByOrderByOrderIndexAsc().stream()
+        return exerciseRepository.findByUserEmailOrderByOrderIndexAsc(currentEmail()).stream()
                 .map(ExerciseResponse::of).toList();
     }
 
     public ExerciseResponse createExercise(ExerciseRequest req) {
-        int orderIndex = req.orderIndex() > 0 ? req.orderIndex() : (int) exerciseRepository.count();
+        User user = currentUser();
+        int orderIndex = req.orderIndex() > 0 ? req.orderIndex()
+                : (int) exerciseRepository.countByUserEmail(currentEmail());
         Exercise exercise = Exercise.builder()
                 .name(req.name())
                 .totalSets(req.totalSets())
                 .orderIndex(orderIndex)
                 .restSeconds(req.restSeconds() > 0 ? req.restSeconds() : 60)
                 .durationSeconds(Math.max(req.durationSeconds(), 0))
+                .user(user)
                 .build();
         return ExerciseResponse.of(exerciseRepository.save(exercise));
     }
 
     public ExerciseResponse updateExercise(Long id, ExerciseRequest req) {
-        Exercise exercise = exerciseRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
+        Exercise exercise = findExercise(id);
         exercise.setName(req.name());
         exercise.setTotalSets(req.totalSets());
         exercise.setOrderIndex(req.orderIndex());
@@ -76,21 +98,22 @@ public class WorkoutService {
     }
 
     public void deleteExercise(Long id) {
-        exerciseRepository.deleteById(id);
+        exerciseRepository.delete(findExercise(id));
     }
 
     // ── Workout Logs ──────────────────────────────────────────────────
 
     public List<WorkoutLogResponse> getDayLogs(LocalDate date) {
-        return workoutLogRepository.findByLogDate(date).stream()
+        return workoutLogRepository.findByExercise_UserEmailAndLogDate(currentEmail(), date).stream()
                 .map(WorkoutLogResponse::of).toList();
     }
 
     @Transactional
     public WorkoutLogResponse incrementSet(Long exerciseId, LocalDate date) {
-        Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
-        WorkoutLog log = workoutLogRepository.findByExerciseIdAndLogDate(exerciseId, date)
+        String email = currentEmail();
+        Exercise exercise = findExercise(exerciseId);
+        WorkoutLog log = workoutLogRepository
+                .findByExercise_IdAndExercise_UserEmailAndLogDate(exerciseId, email, date)
                 .orElse(WorkoutLog.builder().exercise(exercise).logDate(date).completedSets(0).build());
         if (log.getCompletedSets() < exercise.getTotalSets()) {
             log.setCompletedSets(log.getCompletedSets() + 1);
@@ -101,10 +124,11 @@ public class WorkoutService {
     // ── Statistics ────────────────────────────────────────────────────
 
     public List<DayStatsResponse> getWeekStats(LocalDate start, LocalDate end) {
-        List<Exercise> exercises = exerciseRepository.findAll();
+        String email = currentEmail();
+        List<Exercise> exercises = exerciseRepository.findByUserEmailOrderByOrderIndexAsc(email);
         int totalPerDay = exercises.stream().mapToInt(Exercise::getTotalSets).sum();
 
-        List<WorkoutLog> logs = workoutLogRepository.findByLogDateBetween(start, end);
+        List<WorkoutLog> logs = workoutLogRepository.findByExercise_UserEmailAndLogDateBetween(email, start, end);
         Map<LocalDate, Integer> completedByDate = new HashMap<>();
         for (WorkoutLog log : logs) {
             completedByDate.merge(log.getLogDate(), log.getCompletedSets(), Integer::sum);
@@ -122,8 +146,9 @@ public class WorkoutService {
     }
 
     public List<ExerciseDetailStatsResponse> getDetailStats(LocalDate date) {
-        List<Exercise> exercises = exerciseRepository.findAllByOrderByOrderIndexAsc();
-        List<WorkoutLog> logs = workoutLogRepository.findByLogDate(date);
+        String email = currentEmail();
+        List<Exercise> exercises = exerciseRepository.findByUserEmailOrderByOrderIndexAsc(email);
+        List<WorkoutLog> logs = workoutLogRepository.findByExercise_UserEmailAndLogDate(email, date);
         Map<Long, Integer> completedMap = logs.stream()
                 .collect(Collectors.toMap(l -> l.getExercise().getId(), WorkoutLog::getCompletedSets));
 
@@ -137,14 +162,14 @@ public class WorkoutService {
     // ── Video ─────────────────────────────────────────────────────────
 
     public Map<String, String> getVideo(Long exerciseId) {
+        findExercise(exerciseId); // 소유권 확인
         return workoutVideoRepository.findByExerciseId(exerciseId)
                 .map(v -> Map.of("url", getPublicVideoUrl(v.getStoragePath())))
                 .orElse(Map.of("url", ""));
     }
 
     public WorkoutVideoResponse uploadVideo(Long exerciseId, MultipartFile file) throws IOException {
-        Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
+        Exercise exercise = findExercise(exerciseId);
 
         workoutVideoRepository.findByExerciseId(exerciseId).ifPresent(old -> {
             String deleteUrl = supabaseUrl + "/storage/v1/object/" + VIDEO_BUCKET + "/" + old.getStoragePath();
@@ -177,6 +202,7 @@ public class WorkoutService {
     }
 
     public void deleteVideo(Long exerciseId) {
+        findExercise(exerciseId); // 소유권 확인
         workoutVideoRepository.findByExerciseId(exerciseId).ifPresent(old -> {
             String deleteUrl = supabaseUrl + "/storage/v1/object/" + VIDEO_BUCKET + "/" + old.getStoragePath();
             HttpHeaders h = new HttpHeaders();

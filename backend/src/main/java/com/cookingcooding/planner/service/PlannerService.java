@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -23,12 +24,12 @@ public class PlannerService {
     }
 
     public PlannerItem create(PlannerRequest req) {
-        User user = currentUser();
         return plannerRepository.save(PlannerItem.builder()
                 .title(req.getTitle())
                 .description(req.getDescription())
                 .date(req.getDate())
-                .user(user)
+                .notifyAt(parseNotifyAt(req.getNotifyAt()))
+                .user(currentUser())
                 .build());
     }
 
@@ -37,6 +38,8 @@ public class PlannerService {
         item.setTitle(req.getTitle());
         item.setDescription(req.getDescription());
         item.setDate(req.getDate());
+        item.setNotifyAt(parseNotifyAt(req.getNotifyAt()));
+        item.setNotified(false); // 알림 시간이 바뀌면 재발송 가능하도록 초기화
         return plannerRepository.save(item);
     }
 
@@ -47,6 +50,15 @@ public class PlannerService {
     private PlannerItem findById(Long id) {
         return plannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수 없습니다."));
+    }
+
+    private LocalDateTime parseNotifyAt(String notifyAt) {
+        if (notifyAt == null || notifyAt.isBlank()) return null;
+        try {
+            return LocalDateTime.parse(notifyAt);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String currentEmail() {

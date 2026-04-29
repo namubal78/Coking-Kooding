@@ -27,7 +27,7 @@ export default function WorldLayout({ children }: { children: React.ReactNode })
   return (
     <>
       <nav className="fixed top-16 left-0 right-0 z-40 h-10 bg-gray-900/90 backdrop-blur-sm border-b border-gray-800/60">
-        <div className="max-w-6xl mx-auto px-6 h-full flex items-center gap-6">
+        <div className="max-w-6xl mx-auto px-6 h-full flex items-center gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden">
           <span className="text-[10px] text-gray-600 font-semibold tracking-widest uppercase mr-1">은새월드</span>
           {WORLD_LINKS.map(l => (
             <Link
