@@ -7,6 +7,7 @@ public record MessageResponse(
         String senderEmail,
         String senderName,
         String content,
+        String imageUrl,
         String createdAt
 ) {
     public static MessageResponse of(Message m) {
@@ -15,6 +16,7 @@ public record MessageResponse(
                 m.getSenderEmail(),
                 m.getSenderName(),
                 m.getContent(),
+                m.getImageUrl(),
                 m.getCreatedAt().toString()
         );
     }

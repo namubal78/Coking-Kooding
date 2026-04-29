@@ -19,8 +19,11 @@ public class Message {
     @Column(nullable = false)
     private String senderName;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
+
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
