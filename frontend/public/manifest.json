@@ -1,0 +1,23 @@
+{
+  "name": "CokingCooding",
+  "short_name": "CokingCooding",
+  "description": "은새월드 — 플래너, 운동, 앨범, 채팅",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#030712",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/main.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
