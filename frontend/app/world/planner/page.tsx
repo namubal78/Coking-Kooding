@@ -144,6 +144,7 @@ export default function PlannerPage() {
           title: res.title || text,
           date: res.date || todayStr,
           description: res.description || '',
+          notifyAt: '',
         })
         setSidebar('new')
         setEditing(false)
