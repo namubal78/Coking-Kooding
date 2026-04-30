@@ -37,6 +37,7 @@ spring:
       data-source-properties:
         connectTimeout: 60
         socketTimeout: 60
+        prepareThreshold: 0
   jpa:
     hibernate:
       ddl-auto: none
