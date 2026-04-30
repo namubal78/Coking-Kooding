@@ -1,5 +1,6 @@
 package com.cookingcooding.config;
 
+import com.cookingcooding.auth.oauth.CookieOAuth2AuthorizationRequestRepository;
 import com.cookingcooding.auth.oauth.CustomOAuth2UserService;
 import com.cookingcooding.auth.oauth.OAuthFailureHandler;
 import com.cookingcooding.auth.oauth.OAuthSuccessHandler;
@@ -31,6 +32,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuthSuccessHandler oAuthSuccessHandler;
     private final OAuthFailureHandler oAuthFailureHandler;
+    private final CookieOAuth2AuthorizationRequestRepository cookieAuthRequestRepository;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
@@ -73,6 +75,8 @@ public class SecurityConfig {
                 })
             )
             .oauth2Login(oauth2 -> oauth2
+                .authorizationEndpoint(ae -> ae
+                    .authorizationRequestRepository(cookieAuthRequestRepository))
                 .userInfoEndpoint(ui -> ui.userService(customOAuth2UserService))
                 .successHandler(oAuthSuccessHandler)
                 .failureHandler(oAuthFailureHandler)
