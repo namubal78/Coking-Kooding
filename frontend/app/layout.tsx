@@ -45,6 +45,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* iOS Safari "Request Desktop Website" 설정이 켜져 있으면 viewport를 980px로 강제하는데,
+            실제 screen.width가 768px 미만이면 device-width로 복원한다. */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{if(window.screen.width<768&&window.innerWidth>500){var m=document.querySelector('meta[name="viewport"]');if(m)m.content='width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover';}}catch(e){}})()` }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <PwaRegister />
         {children}

@@ -33,14 +33,9 @@ async function setupPush(reg: ServiceWorkerRegistration) {
 }
 
 export default function PwaRegister() {
-  // 서비스워커 등록 + 푸시 구독 + SW 교체 시 자동 리로드
+  // 서비스워커 등록 + 푸시 구독
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !getToken()) return
-
-    // SW가 교체되면 페이지 리로드 (새 배포 즉시 반영)
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      window.location.reload()
-    })
 
     navigator.serviceWorker.register('/sw.js').then(async reg => {
       if (!('PushManager' in window) || !('Notification' in window)) return
