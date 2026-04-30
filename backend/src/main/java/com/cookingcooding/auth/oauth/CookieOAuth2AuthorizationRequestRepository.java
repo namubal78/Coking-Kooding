@@ -3,6 +3,7 @@ package com.cookingcooding.auth.oauth;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ import java.util.Optional;
  * iOS Safari는 OAuth 리다이렉트 시 크로스사이트 JSESSIONID 쿠키를 차단한다.
  * 세션 대신 SameSite=None 쿠키에 OAuth state를 저장해 모바일 로그인 실패를 방지한다.
  */
+@Slf4j
 @Component
 public class CookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
@@ -25,7 +27,9 @@ public class CookieOAuth2AuthorizationRequestRepository
 
     @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
-        return getCookie(request, COOKIE_NAME).map(this::deserialize).orElse(null);
+        Optional<String> cookieVal = getCookie(request, COOKIE_NAME);
+        log.info("[OAuthCookie] loadAuthorizationRequest: cookiePresent={}", cookieVal.isPresent());
+        return cookieVal.map(this::deserialize).orElse(null);
     }
 
     @Override
@@ -35,7 +39,9 @@ public class CookieOAuth2AuthorizationRequestRepository
             deleteCookie(response);
             return;
         }
-        Cookie cookie = new Cookie(COOKIE_NAME, serialize(authorizationRequest));
+        String value = serialize(authorizationRequest);
+        log.info("[OAuthCookie] saveAuthorizationRequest: cookieBytes={}", value.length());
+        Cookie cookie = new Cookie(COOKIE_NAME, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
@@ -48,6 +54,7 @@ public class CookieOAuth2AuthorizationRequestRepository
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request,
                                                                   HttpServletResponse response) {
         OAuth2AuthorizationRequest req = loadAuthorizationRequest(request);
+        log.info("[OAuthCookie] removeAuthorizationRequest: found={}", req != null);
         deleteCookie(response);
         return req;
     }
@@ -76,6 +83,7 @@ public class CookieOAuth2AuthorizationRequestRepository
                 new ByteArrayInputStream(Base64.getUrlDecoder().decode(value)))) {
             return (OAuth2AuthorizationRequest) ois.readObject();
         } catch (Exception e) {
+            log.error("[OAuthCookie] deserialize failed: {}", e.getMessage());
             return null;
         }
     }
