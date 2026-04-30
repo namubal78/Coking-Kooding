@@ -95,7 +95,7 @@ export default function WorldLayout({ children }: { children: React.ReactNode })
               }`}
             >
               {l.icon}
-              <span className="text-[11px] leading-none">{l.label}</span>
+              <span className="text-sm leading-none">{l.label}</span>
               {l.href === '/world/chat' && unread > 0 && (
                 <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
                   {unread > 9 ? '9+' : unread}

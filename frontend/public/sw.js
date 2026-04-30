@@ -1,4 +1,4 @@
-const CACHE = 'ck-v1'
+const CACHE = 'ck-v2'
 const PRECACHE = ['/', '/home', '/blog', '/portfolio', '/demo', '/login']
 
 self.addEventListener('install', e => {
