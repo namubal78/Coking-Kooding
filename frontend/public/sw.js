@@ -1,4 +1,4 @@
-const CACHE = 'ck-v2'
+const CACHE = 'ck-v3'
 const PRECACHE = ['/', '/home', '/blog', '/portfolio', '/demo', '/login']
 
 self.addEventListener('install', e => {
@@ -19,6 +19,8 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return
   if (!e.request.url.startsWith('http')) return
   if (e.request.url.includes('/api/')) return
+  // HTML 페이지는 캐싱 안 하고 항상 네트워크에서 가져옴 (SW 업데이트 즉시 반영)
+  if (e.request.mode === 'navigate') return
 
   e.respondWith(
     fetch(e.request)
