@@ -112,14 +112,14 @@ export default function Navbar() {
       {/* 모바일 드롭다운 */}
       {menuOpen && (
         <div className="md:hidden bg-gray-950 border-t border-gray-800 px-6 py-4 space-y-1">
-          <Link href="/about" className="block py-2 text-sm text-gray-400 hover:text-indigo-400 transition-colors font-mono">
+          <Link href="/about" className="block py-2.5 text-base text-gray-400 hover:text-indigo-400 transition-colors font-mono">
             NAMUBAL78
           </Link>
           {PUBLIC_LINKS.map(l => (
             <Link
               key={l.href}
               href={l.href}
-              className={`block py-2 text-sm transition-colors ${isActive(l.href) ? 'text-indigo-400' : 'text-gray-400 hover:text-white'}`}
+              className={`block py-2.5 text-base transition-colors ${isActive(l.href) ? 'text-indigo-400' : 'text-gray-400 hover:text-white'}`}
             >
               {l.label}
             </Link>
@@ -127,19 +127,19 @@ export default function Navbar() {
           {loggedIn && (
             <>
               <div className="border-t border-gray-800 my-2" />
-              <p className="text-[10px] text-gray-700 uppercase tracking-widest font-semibold mb-1">은새월드</p>
+              <p className="text-xs text-gray-700 uppercase tracking-widest font-semibold mb-1">은새월드</p>
               {WORLD_LINKS.map(l => (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`block py-2 text-sm transition-colors ${isActive(l.href) ? 'text-indigo-400' : 'text-gray-400 hover:text-white'}`}
+                  className={`block py-2.5 text-base transition-colors ${isActive(l.href) ? 'text-indigo-400' : 'text-gray-400 hover:text-white'}`}
                 >
                   {l.label}
                 </Link>
               ))}
               <div className="border-t border-gray-800 my-2" />
-              {displayName && <p className="text-sm text-gray-500 py-1">{displayName}</p>}
-              <button onClick={logout} className="block w-full text-left py-2 text-sm text-gray-600 hover:text-red-400 transition-colors cursor-pointer">
+              {displayName && <p className="text-base text-gray-500 py-1">{displayName}</p>}
+              <button onClick={logout} className="block w-full text-left py-2.5 text-base text-gray-600 hover:text-red-400 transition-colors cursor-pointer">
                 로그아웃
               </button>
             </>
@@ -147,7 +147,7 @@ export default function Navbar() {
           {!loggedIn && (
             <>
               <div className="border-t border-gray-800 my-2" />
-              <Link href="/login" className="block py-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+              <Link href="/login" className="block py-2.5 text-base text-indigo-400 hover:text-indigo-300 transition-colors">
                 은새월드 로그인
               </Link>
             </>

@@ -59,7 +59,7 @@ export default function WorldLayout({ children }: { children: React.ReactNode })
       {/* 데스크톱 상단 서브 네비 */}
       <nav className="hidden md:block fixed top-16 left-0 right-0 z-40 h-10 bg-gray-900/90 backdrop-blur-sm border-b border-gray-800/60">
         <div className="max-w-6xl mx-auto px-6 h-full flex items-center gap-6 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-          <span className="text-[10px] text-gray-600 font-semibold tracking-widest uppercase mr-1 shrink-0">은새월드</span>
+          <span className="text-xs text-gray-600 font-semibold tracking-widest uppercase mr-1 shrink-0">은새월드</span>
           {WORLD_LINKS.map(l => (
             <Link
               key={l.href}
@@ -95,7 +95,7 @@ export default function WorldLayout({ children }: { children: React.ReactNode })
               }`}
             >
               {l.icon}
-              <span className="text-[9px] leading-none">{l.label}</span>
+              <span className="text-[11px] leading-none">{l.label}</span>
               {l.href === '/world/chat' && unread > 0 && (
                 <span className="absolute top-1.5 right-1/4 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
                   {unread > 9 ? '9+' : unread}
