@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Navbar from '@/components/Navbar'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 interface DraftEntry {
   id: number
@@ -106,13 +107,17 @@ function renderContent(content: string) {
 
 export default function DemoDraftPage() {
   const [expanded, setExpanded] = useState<number | null>(DUMMY_DRAFTS[0].id)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
       <main className="max-w-4xl mx-auto px-6 pt-28 pb-16">
         <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Demo · Draft</p>
-        <h1 className="text-3xl font-bold mb-1">개발 드래프트</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-3xl font-bold">개발 드래프트</h1>
+          <HelpButton onClick={() => setHelpOpen(true)} />
+        </div>
         <p className="text-gray-500 text-sm mb-8">
           커밋 push 시 Claude AI가 자동으로 작성하는 개발 일지. 이건 더미 데이터 샘플입니다.
         </p>
@@ -148,6 +153,38 @@ export default function DemoDraftPage() {
           실제 드래프트는 로그인 후 은새월드 → 드래프트에서 확인할 수 있습니다.
         </p>
       </main>
+
+      {helpOpen && (
+        <HelpModal title="📝 개발 드래프트 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection
+            label="자동 생성 흐름"
+            items={[
+              '① GitHub push → dev-log.yml 워크플로우 실행',
+              '② 2분 대기 (배포 안정화 후 처리)',
+              '③ 백엔드 /api/dev-logs/webhook 호출 (커밋 목록 전달)',
+              '④ Spring Boot → Claude Haiku 4.5로 자동 요약 생성',
+              '⑤ dev_logs PostgreSQL 테이블 저장 + Slack Bot 알림',
+            ]}
+          />
+          <HelpSection
+            label="편집 기능"
+            items={[
+              'Toast UI Editor로 Markdown 재편집 가능',
+              'PUT /api/dev-logs/{id} — 내용 덮어쓰기',
+              'Claude AI 재생성 버튼으로 요약 갱신 가능',
+              'Slack 채널에 생성/수정 알림 자동 전송',
+            ]}
+          />
+          <HelpSection
+            label="저장 구조"
+            items={[
+              'dev_logs 테이블: sha, date, content, branch, created_at',
+              'Supabase PostgreSQL에 저장',
+              '은새월드 로그인 사용자만 열람 가능',
+            ]}
+          />
+        </HelpModal>
+      )}
     </div>
   )
 }

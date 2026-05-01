@@ -46,9 +46,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        {/* iOS Safari "Request Desktop Website" 설정이 켜져 있으면 viewport를 980px로 강제하는데,
-            실제 screen.width가 768px 미만이면 device-width로 복원한다. */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){try{if(window.screen.width<768&&window.innerWidth>500){var m=document.querySelector('meta[name="viewport"]');if(m)m.content='width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover';}}catch(e){}})()` }} />
+        {/* PWA/iOS Safari에서 viewport가 980px로 고정되는 경우 device-width로 강제 복원.
+            screen.width<768이면 모바일 기기로 판단해 viewport meta를 없으면 생성, 있으면 덮어씀. */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{if(window.screen.width<768){var c='width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover';var m=document.querySelector('meta[name="viewport"]');if(m){m.content=c;}else{m=document.createElement('meta');m.setAttribute('name','viewport');m.content=c;document.head.appendChild(m);}}}catch(e){}})()` }} />
       </head>
       <body className="min-h-full flex flex-col">
         <PwaRegister />

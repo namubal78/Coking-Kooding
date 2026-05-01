@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { API_URL, apiFetch, apiUpload } from '@/lib/api'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 type UploadedFile = {
   id: number
@@ -33,6 +34,7 @@ export default function DemoFilesPage() {
   const [uploading, setUploading] = useState(false)
   const [newExt, setNewExt] = useState('')
   const [error, setError] = useState('')
+  const [helpOpen, setHelpOpen] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -86,8 +88,11 @@ export default function DemoFilesPage() {
       <main className="max-w-4xl mx-auto px-6 pt-28 pb-16">
         <div className="mb-2">
           <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Demo · Files</p>
-          <h1 className="text-3xl font-bold">파일 관리</h1>
-          <p className="text-gray-500 text-sm mt-2">Spring Boot 파일 업로드 · 확장자 차단 기능 데모입니다.</p>
+          <div className="flex items-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold">파일 관리</h1>
+            <HelpButton onClick={() => setHelpOpen(true)} />
+          </div>
+          <p className="text-gray-500 text-sm">Spring Boot 파일 업로드 · 확장자 차단 기능 데모입니다.</p>
         </div>
 
         <div className="bg-indigo-950/30 border border-indigo-800/30 rounded-xl px-5 py-3 mb-6 text-xs text-indigo-300">
@@ -108,6 +113,13 @@ export default function DemoFilesPage() {
           </div>
           <input ref={fileInput} type="file" className="hidden" onChange={upload} />
         </div>
+
+      {helpOpen && (
+        <HelpModal title="📁 파일 관리 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection label="기술 스택" items={['Spring Boot MultipartFile 업로드 처리', 'Supabase Storage REST API (파일 저장, SDK 없이 직접 호출)', 'JPA — uploaded_files 테이블 (이름·크기·경로·업로드 시각)', 'Spring Security JWT 인증']} />
+          <HelpSection label="주요 구현 포인트" items={['확장자 차단: blocked_extensions DB 테이블, 업로드 시 서버에서 검증', '파일 크기 제한: spring.servlet.multipart.max-file-size=50MB', 'Supabase Public URL 반환 → 클라이언트에서 직접 다운로드', '비로그인: 목록 조회만 / 로그인(가족): 업로드·삭제 가능']} />
+        </HelpModal>
+      )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">

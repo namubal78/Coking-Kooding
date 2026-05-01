@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { apiFetch } from '@/lib/api'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 type Payment = {
   id: number
@@ -29,6 +30,7 @@ const STATUS_COLOR: Record<string, string> = {
 export default function DemoPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   useEffect(() => {
     apiFetch('/api/payments').then(r => r.json()).then(setPayments).catch(() => {}).finally(() => setLoading(false))
@@ -43,7 +45,10 @@ export default function DemoPaymentsPage() {
         <div className="flex items-end justify-between mb-2">
           <div>
             <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Demo · Payments</p>
-            <h1 className="text-3xl font-bold">결제 내역</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">결제 내역</h1>
+              <HelpButton onClick={() => setHelpOpen(true)} />
+            </div>
           </div>
           {payments.length > 0 && (
             <div className="text-right">
@@ -88,6 +93,14 @@ export default function DemoPaymentsPage() {
           </div>
         )}
       </main>
+
+      {helpOpen && (
+        <HelpModal title="💳 결제 내역 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection label="기술 스택" items={['PortOne V1 REST API (구 아임포트)', 'Spring Boot 프록시 — API Key 서버 보관', 'JPA — payments 테이블 (imp_uid, merchant_uid, amount, status)']} />
+          <HelpSection label="결제 검증 흐름" items={['① 프론트: PortOne SDK로 결제창 호출 → imp_uid 수신', '② 백엔드: imp_uid로 PortOne API 조회 → 금액 대조 검증', '③ 검증 통과 시 DB 저장 + 응답 반환']} />
+          <HelpSection label="현재 상태" items={['PortOne SDK 미연동 — UI 및 API 구조만 완성', '실제 결제 연동 시 프론트에 imp-cdn 스크립트 추가 필요']} />
+        </HelpModal>
+      )}
     </div>
   )
 }

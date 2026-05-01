@@ -1,4 +1,8 @@
+'use client'
+
+import { useState } from 'react'
 import Navbar from '@/components/Navbar'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 const DUMMY_ALBUMS = [
   { id: 1, name: '가족 나들이', date: '2026-04-20', gradient: 'from-indigo-600 to-violet-600', emoji: '🌸', count: 12 },
@@ -14,6 +18,8 @@ const TOTAL_MB = DUMMY_ALBUMS.reduce((s, a) => s + a.count * MB_PER_PHOTO, 0)
 const LIMIT_MB = 1024
 
 export default function DemoPhotosPage() {
+  const [helpOpen, setHelpOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
@@ -21,7 +27,10 @@ export default function DemoPhotosPage() {
         <div className="flex items-end justify-between mb-8">
           <div>
             <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Demo · Photos</p>
-            <h1 className="text-3xl font-bold">사진 앨범</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">사진 앨범</h1>
+              <HelpButton onClick={() => setHelpOpen(true)} />
+            </div>
             <p className="text-gray-500 text-sm mt-2">더미 데이터로 체험하는 가족 앨범 UI.</p>
           </div>
           <div className="text-right text-sm">
@@ -56,6 +65,13 @@ export default function DemoPhotosPage() {
           ))}
         </div>
       </main>
+
+      {helpOpen && (
+        <HelpModal title="📸 사진 앨범 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection label="레이아웃" items={['CSS Grid grid-cols-2 sm:grid-cols-3 바둑판 구성', 'aspect-square로 셀을 항상 정사각형 유지', '용량 표시: 파일 크기 합산을 MB 단위로 집계']} />
+          <HelpSection label="실제 버전" items={['Supabase Storage photos 버킷 (Public read)', '프론트 → Spring Boot → Supabase REST API 업로드', 'Public URL을 photos DB 테이블에 저장 후 그리드 렌더링', '업로드 시 확장자 검증 (jpg, png, webp, gif)']} />
+        </HelpModal>
+      )}
     </div>
   )
 }

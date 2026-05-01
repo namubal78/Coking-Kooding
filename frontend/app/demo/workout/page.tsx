@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Navbar from '@/components/Navbar'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 const DUMMY_EXERCISES = [
   { id: 1, name: '스쿼트', sets: 3, reps: 15, weight: 0, unit: 'kg' },
@@ -15,6 +16,7 @@ export default function DemoWorkoutPage() {
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [timerSec, setTimerSec] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -45,7 +47,10 @@ export default function DemoWorkoutPage() {
       <Navbar />
       <main className="max-w-4xl mx-auto px-6 pt-28 pb-16">
         <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Demo · Workout</p>
-        <h1 className="text-3xl font-bold mb-1">운동 트래커</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-3xl font-bold">운동 트래커</h1>
+          <HelpButton onClick={() => setHelpOpen(true)} />
+        </div>
         <p className="text-gray-500 text-sm mb-6">더미 운동 목록으로 체험. 세트 체크·타이머가 동작하며 새로고침 시 초기화됩니다.</p>
 
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-6 flex items-center justify-between">
@@ -121,6 +126,13 @@ export default function DemoWorkoutPage() {
           })}
         </div>
       </main>
+
+      {helpOpen && (
+        <HelpModal title="💪 운동 트래커 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection label="이 데모 구현" items={['타이머: setInterval(1000ms) + useRef로 interval 관리', '세트 체크: Record<"exId-setIdx", boolean> 상태 관리', '진행률: 모든 세트 완료 운동 수 / 전체 운동 수 계산', '새로고침 시 초기화 (localStorage 미저장)']} />
+          <HelpSection label="실제 버전 추가 기능" items={['Spring Boot JPA — exercises, workout_logs PostgreSQL 저장', 'Supabase Storage workout-videos 버킷에 운동 영상 저장', 'TTS: speechSynthesis.speak()로 세트 완료 음성 안내', '주간·월간 운동 통계 API']} />
+        </HelpModal>
+      )}
     </div>
   )
 }

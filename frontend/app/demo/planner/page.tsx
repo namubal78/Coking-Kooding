@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Navbar from '@/components/Navbar'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const EVENT_COLORS = [
@@ -26,6 +27,7 @@ export default function DemoPlannerPage() {
   })
   const [form, setForm] = useState({ title: '', description: '', date: '' })
   const [nextId, setNextId] = useState(100)
+  const [helpOpen, setHelpOpen] = useState(false)
 
   const firstDay = new Date(cursor.year, cursor.month, 1).getDay()
   const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate()
@@ -67,7 +69,10 @@ export default function DemoPlannerPage() {
       <Navbar />
       <main className="max-w-5xl mx-auto px-6 pt-28 pb-16">
         <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Demo · Planner</p>
-        <h1 className="text-3xl font-bold mb-1">플래너</h1>
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="text-3xl font-bold">플래너</h1>
+          <HelpButton onClick={() => setHelpOpen(true)} />
+        </div>
         <p className="text-gray-500 text-sm mb-6">더미 데이터로 체험하는 월간 플래너. 추가/삭제는 새로고침 시 초기화됩니다.</p>
 
         <div className="flex items-center gap-4 mb-4">
@@ -174,6 +179,13 @@ export default function DemoPlannerPage() {
           </div>
         </div>
       </main>
+
+      {helpOpen && (
+        <HelpModal title="🗓️ 플래너 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection label="이 데모 vs 실제" items={['데모: React useState만, 새로고침 시 초기화', '실제: Spring Boot JPA + planner_items PostgreSQL 테이블', '실제: Quartz Scheduler로 일정 시각 알림 자동 발송']} />
+          <HelpSection label="실제 버전 추가 기능" items={['Web Speech API SpeechRecognition으로 음성 입력', 'Claude NLP로 자연어 파싱 → {title, date, time} 추출', '예: "다음 주 월요일 2시 치과" → 날짜·시간 자동 인식', 'VAPID 웹 푸시로 일정 알림 발송']} />
+        </HelpModal>
+      )}
     </div>
   )
 }

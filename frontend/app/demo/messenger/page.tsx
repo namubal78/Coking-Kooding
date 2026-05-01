@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 interface Message {
   id: number
@@ -33,6 +34,7 @@ function formatDate(iso: string) {
 export default function DemoMessengerPage() {
   const [messages, setMessages] = useState<Message[]>(DUMMY_MESSAGES)
   const [input, setInput] = useState('')
+  const [helpOpen, setHelpOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function DemoMessengerPage() {
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-xl font-bold">은새네 가족 채팅</h1>
             <span className="text-xs text-gray-600 bg-gray-800 px-2 py-0.5 rounded-full">로컬 데모</span>
+            <HelpButton onClick={() => setHelpOpen(true)} />
           </div>
           <p className="text-gray-600 text-xs">메시지를 입력해보세요. 새로고침 시 초기화됩니다.</p>
         </div>
@@ -144,6 +147,13 @@ export default function DemoMessengerPage() {
           </div>
         </div>
       </main>
+
+      {helpOpen && (
+        <HelpModal title="💬 가족 메신저 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection label="이 데모" items={['React state만 사용 — 실제 WebSocket 연결 없음', '새로고침 시 더미 메시지로 초기화']} />
+          <HelpSection label="실제 버전 스택" items={['STOMP + SockJS (@stomp/stompjs, sockjs-client)', 'Spring Boot WebSocketMessageBroker — /ws endpoint', '구독: /topic/family | 발행: /app/chat.send', 'messages 테이블 DB 영속화 + message_reads 읽음 표시', 'VAPID 웹 푸시로 백그라운드 알림']} />
+        </HelpModal>
+      )}
     </div>
   )
 }

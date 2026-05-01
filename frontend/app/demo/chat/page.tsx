@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { API_URL } from '@/lib/api'
+import { HelpButton, HelpModal, HelpSection } from '@/components/HelpModal'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -14,6 +15,7 @@ export default function DemoChatPage() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [helpOpen, setHelpOpen] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -56,8 +58,11 @@ export default function DemoChatPage() {
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 pt-28 pb-6 flex flex-col">
         <div className="mb-4">
           <p className="text-indigo-400 text-sm font-semibold tracking-widest uppercase mb-1">Demo · Chat</p>
-          <h1 className="text-2xl font-bold">AI 챗봇</h1>
-          <p className="text-gray-500 text-xs mt-1">Spring Boot → Claude API 프록시 데모</p>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl font-bold">AI 챗봇</h1>
+            <HelpButton onClick={() => setHelpOpen(true)} />
+          </div>
+          <p className="text-gray-500 text-xs">Spring Boot → Claude API 프록시 데모</p>
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-4 py-4 min-h-[300px] max-h-[60vh]">
@@ -109,6 +114,13 @@ export default function DemoChatPage() {
           </button>
         </form>
       </main>
+
+      {helpOpen && (
+        <HelpModal title="🤖 AI 챗봇 — 구현 방식" onClose={() => setHelpOpen(false)}>
+          <HelpSection label="기술 스택" items={['Claude Haiku 4.5 (claude-haiku-4-5)', 'Spring Boot /api/chat — Anthropic API 프록시', 'API Key: Render 환경변수에 보관 (클라이언트 미노출)']} />
+          <HelpSection label="구현 포인트" items={['대화 히스토리: messages[] 배열 전체를 매 요청마다 전송', '비용 최적화: Haiku 선택 → 대화당 약 $0.001 미만', 'Spring Boot가 중간 프록시 역할 → API Key 서버에서만 처리', 'Rate limit 별도 구현 없음 (데모 수준)']} />
+        </HelpModal>
+      )}
     </div>
   )
 }
