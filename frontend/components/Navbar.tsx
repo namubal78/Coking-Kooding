@@ -47,7 +47,10 @@ export default function Navbar() {
   const isActive = (href: string) => pathname.startsWith(href)
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800">
+    <nav
+      className="fixed top-0 w-full z-50 bg-gray-950/80 backdrop-blur-md border-b border-gray-800"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* 로고 */}
         <div className="flex items-center gap-3 shrink-0">

@@ -182,8 +182,23 @@ export default function DemoPlannerPage() {
 
       {helpOpen && (
         <HelpModal title="🗓️ 플래너 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection label="이 데모 vs 실제" items={['데모: React useState만, 새로고침 시 초기화', '실제: Spring Boot JPA + planner_items PostgreSQL 테이블', '실제: Quartz Scheduler로 일정 시각 알림 자동 발송']} />
-          <HelpSection label="실제 버전 추가 기능" items={['Web Speech API SpeechRecognition으로 음성 입력', 'Claude NLP로 자연어 파싱 → {title, date, time} 추출', '예: "다음 주 월요일 2시 치과" → 날짜·시간 자동 인식', 'VAPID 웹 푸시로 일정 알림 발송']} />
+          <HelpSection label="데모 vs 실제 버전" items={[
+            '데모: React useState만 — 서버 요청 없음, 새로고침 시 초기화',
+            '실제: Spring Boot JPA → planner_items 테이블(PostgreSQL)에 영속화',
+            '실제: 일정별 notify_at 설정 → Quartz Scheduler가 1분마다 체크',
+          ]} />
+          <HelpSection label="음성 입력 구현 (실제)" items={[
+            'Web Speech API SpeechRecognition → 음성 텍스트 변환',
+            '텍스트를 Spring Boot POST /api/planner/voice로 전송',
+            'Claude Haiku NLP: "다음 주 월요일 2시 치과"',
+            '→ { title: "치과 예약", date: "2026-05-04", time: "14:00" } 반환',
+            '파싱 결과로 폼 자동 채움',
+          ]} />
+          <HelpSection label="알림 스택 (실제)" items={[
+            'VAPID Web Push: push_subscriptions 테이블에 구독 정보 저장',
+            'Quartz Scheduler: notify_at 도달 시 WebPushService.send() 호출',
+            'CoolSMS: 선택적 SMS 알림 (환경변수 설정 시 활성화)',
+          ]} />
         </HelpModal>
       )}
     </div>

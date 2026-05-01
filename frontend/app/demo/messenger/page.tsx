@@ -150,8 +150,24 @@ export default function DemoMessengerPage() {
 
       {helpOpen && (
         <HelpModal title="💬 가족 메신저 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection label="이 데모" items={['React state만 사용 — 실제 WebSocket 연결 없음', '새로고침 시 더미 메시지로 초기화']} />
-          <HelpSection label="실제 버전 스택" items={['STOMP + SockJS (@stomp/stompjs, sockjs-client)', 'Spring Boot WebSocketMessageBroker — /ws endpoint', '구독: /topic/family | 발행: /app/chat.send', 'messages 테이블 DB 영속화 + message_reads 읽음 표시', 'VAPID 웹 푸시로 백그라운드 알림']} />
+          <HelpSection label="이 데모" items={[
+            'React state만 사용 — 실제 WebSocket 연결 없음',
+            '새로고침 시 더미 메시지로 초기화',
+          ]} />
+          <HelpSection label="실제 버전 WebSocket 연결" items={[
+            'STOMP + SockJS: ws://{API}/ws?token={JWT}',
+            '쿼리파라미터로 JWT 전달 (브라우저 WebSocket API는 커스텀 헤더 불가)',
+            'JwtHandshakeInterceptor: 핸드셰이크 전 JWT 검증',
+            '구독: /topic/messages (메시지), /topic/reads (읽음 상태)',
+            '발행: /app/chat.send → @MessageMapping 핸들러 → DB 저장 + 브로드캐스트',
+          ]} />
+          <HelpSection label="읽음 처리 & 알림" items={[
+            'message_reads 테이블: userEmail(PK), lastReadId',
+            'POST /api/messenger/read → lastReadId 업데이트 → /topic/reads 브로드캐스트',
+            '미읽음 수: COUNT(messages.id) WHERE id > lastReadId',
+            'VAPID Web Push: 새 메시지 시 다른 구독자에게 백그라운드 푸시 발송',
+            'navigator.setAppBadge(n): iOS PWA 홈 아이콘 뱃지 업데이트',
+          ]} />
         </HelpModal>
       )}
     </div>

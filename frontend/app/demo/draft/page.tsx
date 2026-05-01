@@ -156,33 +156,25 @@ export default function DemoDraftPage() {
 
       {helpOpen && (
         <HelpModal title="📝 개발 드래프트 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection
-            label="자동 생성 흐름"
-            items={[
-              '① GitHub push → dev-log.yml 워크플로우 실행',
-              '② 2분 대기 (배포 안정화 후 처리)',
-              '③ 백엔드 /api/dev-logs/webhook 호출 (커밋 목록 전달)',
-              '④ Spring Boot → Claude Haiku 4.5로 자동 요약 생성',
-              '⑤ dev_logs PostgreSQL 테이블 저장 + Slack Bot 알림',
-            ]}
-          />
-          <HelpSection
-            label="편집 기능"
-            items={[
-              'Toast UI Editor로 Markdown 재편집 가능',
-              'PUT /api/dev-logs/{id} — 내용 덮어쓰기',
-              'Claude AI 재생성 버튼으로 요약 갱신 가능',
-              'Slack 채널에 생성/수정 알림 자동 전송',
-            ]}
-          />
-          <HelpSection
-            label="저장 구조"
-            items={[
-              'dev_logs 테이블: sha, date, content, branch, created_at',
-              'Supabase PostgreSQL에 저장',
-              '은새월드 로그인 사용자만 열람 가능',
-            ]}
-          />
+          <HelpSection label="자동 생성 파이프라인" items={[
+            '① GitHub push → dev-log.yml 워크플로우 트리거',
+            '② 2분 대기 (Docker 빌드·Render 배포 안정화)',
+            '③ Spring Boot POST /api/dev-logs/webhook 호출',
+            '   X-Webhook-Secret 헤더로 인증 (서버간 시크릿, JWT 아님)',
+            '④ 커밋 목록을 Claude Haiku 4.5에 전달 → 한국어 개발일지 요약 생성',
+            '⑤ dev_logs 테이블(PostgreSQL)에 저장 + Slack #dev 알림 전송',
+          ]} />
+          <HelpSection label="편집 기능" items={[
+            'Toast UI Editor: 마크다운 WYSIWYG 에디터로 AI 요약 직접 수정',
+            'PUT /api/dev-logs/{id}: 수정된 내용으로 DB 덮어쓰기',
+            'Slack Bot: 수정 완료 시 #dev 채널에 알림',
+            'PDF 출력: window.print() + @media print CSS로 PDF 저장',
+          ]} />
+          <HelpSection label="보안 & 접근" items={[
+            '웹훅: X-Webhook-Secret으로 자체 인증 (Spring Security 우회 허용)',
+            '열람: 가족 JWT 로그인 필요 — 공개 블로그와 별개',
+            '수정: JWT 인증 + 서버에서 권한 검증',
+          ]} />
         </HelpModal>
       )}
     </div>

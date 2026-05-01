@@ -117,8 +117,22 @@ export default function DemoChatPage() {
 
       {helpOpen && (
         <HelpModal title="🤖 AI 챗봇 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection label="기술 스택" items={['Claude Haiku 4.5 (claude-haiku-4-5)', 'Spring Boot /api/chat — Anthropic API 프록시', 'API Key: Render 환경변수에 보관 (클라이언트 미노출)']} />
-          <HelpSection label="구현 포인트" items={['대화 히스토리: messages[] 배열 전체를 매 요청마다 전송', '비용 최적화: Haiku 선택 → 대화당 약 $0.001 미만', 'Spring Boot가 중간 프록시 역할 → API Key 서버에서만 처리', 'Rate limit 별도 구현 없음 (데모 수준)']} />
+          <HelpSection label="아키텍처" items={[
+            '프론트 → Spring Boot POST /api/chat → Anthropic API → Claude Haiku 4.5',
+            'API Key는 백엔드(Render 환경변수)에만 보관 — 클라이언트에 절대 미노출',
+            'Spring Boot가 중간 프록시 역할 (rate limit, 로깅, API 키 보호)',
+          ]} />
+          <HelpSection label="대화 구현 방식" items={[
+            '프론트: messages[] 배열 전체를 매 요청마다 Anthropic API에 전달',
+            '서버: 전달받은 배열 그대로 messages API body에 포함',
+            '서버 세션 없음 — 대화 기록은 React state에만 존재',
+            '탭 닫거나 새로고침 시 대화 초기화',
+          ]} />
+          <HelpSection label="비용 & 한계" items={[
+            'Claude Haiku 4.5: 입력 $0.80/MTok · 출력 $4/MTok',
+            '평균 대화 한 번: ~$0.001 미만',
+            'Rate limiting 미구현 — 실서비스 전 추가 필요',
+          ]} />
         </HelpModal>
       )}
     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
+import Navbar from '@/components/Navbar'
 import { API_URL, apiFetch, getToken, parseJwt, getDisplayName } from '@/lib/api'
 
 interface Message {
@@ -93,6 +94,8 @@ export default function ChatPage() {
     apiFetch('/api/messenger/read', {
       method: 'POST',
       body: JSON.stringify({ lastId }),
+    }).then(() => {
+      window.dispatchEvent(new Event('messagesRead'))
     }).catch(() => {})
   }
 
@@ -163,6 +166,7 @@ export default function ChatPage() {
 
   return (
     <>
+      <Navbar />
       {/* 이미지 라이트박스 */}
       {lightbox && (
         <div
@@ -173,7 +177,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      <div className="flex flex-col mt-16 h-[calc(100vh-8rem)] md:h-[calc(100vh-6.5rem)] bg-gray-950">
+      <div className="chat-area">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-800 bg-gray-900/60 backdrop-blur shrink-0">
           <div className="relative">
@@ -285,8 +289,8 @@ export default function ChatPage() {
               onKeyDown={handleKey}
               placeholder={pendingImage ? '이미지에 메시지 추가 (선택)' : '메시지를 입력하세요...'}
               rows={1}
-              className="flex-1 bg-gray-800 text-white text-sm rounded-xl px-4 py-2.5 resize-none outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 leading-relaxed"
-              style={{ minHeight: '42px', maxHeight: '120px' }}
+              className="flex-1 bg-gray-800 text-white rounded-xl px-4 py-2.5 resize-none outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 leading-relaxed"
+              style={{ minHeight: '42px', maxHeight: '120px', fontSize: '16px' }}
             />
             <button
               onClick={send}

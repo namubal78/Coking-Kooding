@@ -116,8 +116,26 @@ export default function DemoFilesPage() {
 
       {helpOpen && (
         <HelpModal title="📁 파일 관리 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection label="기술 스택" items={['Spring Boot MultipartFile 업로드 처리', 'Supabase Storage REST API (파일 저장, SDK 없이 직접 호출)', 'JPA — uploaded_files 테이블 (이름·크기·경로·업로드 시각)', 'Spring Security JWT 인증']} />
-          <HelpSection label="주요 구현 포인트" items={['확장자 차단: blocked_extensions DB 테이블, 업로드 시 서버에서 검증', '파일 크기 제한: spring.servlet.multipart.max-file-size=50MB', 'Supabase Public URL 반환 → 클라이언트에서 직접 다운로드', '비로그인: 목록 조회만 / 로그인(가족): 업로드·삭제 가능']} />
+          <HelpSection label="업로드 흐름" items={[
+            '① 클라이언트: MultipartForm → Spring Boot POST /api/files/upload',
+            '② 백엔드: blocked_extensions 테이블에서 확장자 차단 여부 검증',
+            '③ Spring Boot → Supabase Storage REST API PUT (SDK 없이 직접 호출)',
+            '   Authorization: Bearer {service-key} 헤더로 인증',
+            '④ Supabase 반환 Public URL → uploaded_files 테이블에 저장',
+            '⑤ 클라이언트: Public URL로 직접 다운로드 (서버 경유 불필요)',
+          ]} />
+          <HelpSection label="확장자 차단 시스템" items={[
+            'blocked_extensions 테이블: extension 컬럼 + is_fixed(시스템 고정 여부)',
+            '업로드 시 서버에서 확장자 대조 — 차단 시 HTTP 400 반환',
+            'UI에서 차단 목록 실시간 추가·삭제 가능 (is_fixed=false인 항목만)',
+            '시스템 고정 확장자(exe, sh 등)는 UI에서 삭제 불가',
+          ]} />
+          <HelpSection label="권한 & 제한" items={[
+            '비로그인: GET /api/files (목록), GET /api/files/extensions 만 허용',
+            '로그인(가족): 업로드·삭제 가능 (Spring Security JWT 검증)',
+            '파일 크기: 50MB 제한 (spring.servlet.multipart.max-file-size)',
+            'Service Key는 Render 환경변수에만 보관 (클라이언트 미노출)',
+          ]} />
         </HelpModal>
       )}
 

@@ -18,6 +18,7 @@ const ToastViewer = dynamic(
 )
 
 const ADMIN_EMAIL = 'namubal78@gmail.com'
+const FAMILY_CATEGORY = '가족'
 const CATEGORIES = ['학습', '트러블슈팅', '가족', '초안'] as const
 
 type Post = {
@@ -28,15 +29,20 @@ type Post = {
   excerpt: string
   tags: string[]
   authorNickname: string
+  authorEmail: string
   createdAt: string
 }
 
 const EMPTY_FORM = { title: '', category: '학습', content: '', excerpt: '', tags: '' }
 
-function isAdmin(): boolean {
+function getCurrentEmail(): string {
   const token = getToken()
-  if (!token) return false
-  return parseJwt(token)?.sub === ADMIN_EMAIL
+  if (!token) return ''
+  return parseJwt(token)?.sub ?? ''
+}
+
+function isAdmin(): boolean {
+  return getCurrentEmail() === ADMIN_EMAIL
 }
 
 export default function BlogPage() {
@@ -61,22 +67,35 @@ function BlogContent() {
   const [saving, setSaving] = useState(false)
   const [loggedIn, setLoggedIn] = useState(false)
   const [admin, setAdmin] = useState(false)
+  const [myEmail, setMyEmail] = useState('')
   const [page, setPage] = useState(0)
   const PAGE_SIZE = 10
 
   useEffect(() => {
-    const token = getToken()
-    setLoggedIn(!!token)
+    const email = getCurrentEmail()
+    setMyEmail(email)
+    setLoggedIn(!!email)
     setAdmin(isAdmin())
-    apiFetch('/api/blog/posts').then(r => r.json()).then(setPosts).finally(() => setLoading(false))
+    apiFetch('/api/blog/posts')
+      .then(r => r.json())
+      .then((data: Post[]) => {
+        // 비로그인 시 가족 카테고리 제외 (백엔드도 필터하지만 프론트도 방어)
+        const filtered = email ? data : data.filter(p => p.category !== FAMILY_CATEGORY)
+        setPosts(filtered)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
     if (!postId) { setDetail(null); return }
-    apiFetch(`/api/blog/posts/${postId}`).then(r => r.json()).then((p: Post) => {
-      setDetail(p)
-      setForm({ title: p.title, category: p.category, content: p.content, excerpt: p.excerpt ?? '', tags: p.tags?.join(', ') ?? '' })
-    }).catch(() => router.push('/blog'))
+    apiFetch(`/api/blog/posts/${postId}`)
+      .then(r => r.json())
+      .then((p: Post) => {
+        setDetail(p)
+        setForm({ title: p.title, category: p.category, content: p.content, excerpt: p.excerpt ?? '', tags: p.tags?.join(', ') ?? '' })
+      })
+      .catch(() => router.push('/blog'))
   }, [postId, router])
 
   function openDetail(id: number) {
@@ -156,7 +175,7 @@ function BlogContent() {
             <h1 className="text-3xl font-bold mt-3 mb-2">{detail.title}</h1>
             <div className="flex items-center justify-between text-gray-600 text-sm mb-8 pb-6 border-b border-gray-800">
               <span>{detail.authorNickname} · {new Date(detail.createdAt).toLocaleDateString('ko-KR')}</span>
-              {admin && (
+              {(admin || myEmail === detail.authorEmail) && (
                 <div className="flex gap-4">
                   <button onClick={() => setEditing(true)} className="hover:text-indigo-400 transition-colors cursor-pointer">수정</button>
                   <button onClick={() => deletePost(detail.id)} className="hover:text-red-400 transition-colors cursor-pointer">삭제</button>
@@ -231,7 +250,7 @@ function BlogContent() {
                         </button>
                       </div>
                     </div>
-                    {admin && (
+                    {(admin || myEmail === p.authorEmail) && (
                       <div className="flex flex-col gap-1 shrink-0">
                         <button onClick={() => openEdit(p)} className="text-gray-500 hover:text-indigo-400 text-sm transition-colors cursor-pointer">수정</button>
                         <button onClick={() => deletePost(p.id)} className="text-gray-700 hover:text-red-400 text-sm transition-colors cursor-pointer">삭제</button>

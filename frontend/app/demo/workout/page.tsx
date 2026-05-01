@@ -129,8 +129,23 @@ export default function DemoWorkoutPage() {
 
       {helpOpen && (
         <HelpModal title="💪 운동 트래커 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection label="이 데모 구현" items={['타이머: setInterval(1000ms) + useRef로 interval 관리', '세트 체크: Record<"exId-setIdx", boolean> 상태 관리', '진행률: 모든 세트 완료 운동 수 / 전체 운동 수 계산', '새로고침 시 초기화 (localStorage 미저장)']} />
-          <HelpSection label="실제 버전 추가 기능" items={['Spring Boot JPA — exercises, workout_logs PostgreSQL 저장', 'Supabase Storage workout-videos 버킷에 운동 영상 저장', 'TTS: speechSynthesis.speak()로 세트 완료 음성 안내', '주간·월간 운동 통계 API']} />
+          <HelpSection label="이 데모 구현" items={[
+            '타이머: useRef<NodeJS.Timeout> + setInterval(1000ms) 관리',
+            '세트 체크: Record<"운동ID-세트인덱스", boolean> 상태',
+            '운동 타이머 → 완료 시 자동으로 휴식 타이머 시작 (체인)',
+            '진행률: 모든 세트 완료 운동 수 ÷ 전체 운동 수',
+            '새로고침 시 초기화 (세션 내 상태만 유지)',
+          ]} />
+          <HelpSection label="실제 버전 DB 구조" items={[
+            'exercises: id, name, total_sets, rest_seconds, duration_seconds, order_index',
+            'workout_logs: id, exercise_id, user_id, date, completed_sets',
+            'workout_videos: Supabase workout-videos 버킷 URL → DB 저장',
+          ]} />
+          <HelpSection label="실제 버전 추가 기능" items={[
+            'TTS: window.speechSynthesis.speak(new SpeechSynthesisUtterance("3세트 완료"))',
+            '운동 통계: 주간·월간 완료율 집계 (exercises + workout_logs JOIN 쿼리)',
+            '영상: Supabase Public URL을 video 태그 src에 직접 연결해 스트리밍',
+          ]} />
         </HelpModal>
       )}
     </div>

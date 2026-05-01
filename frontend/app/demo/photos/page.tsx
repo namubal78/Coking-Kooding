@@ -68,8 +68,25 @@ export default function DemoPhotosPage() {
 
       {helpOpen && (
         <HelpModal title="📸 사진 앨범 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection label="레이아웃" items={['CSS Grid grid-cols-2 sm:grid-cols-3 바둑판 구성', 'aspect-square로 셀을 항상 정사각형 유지', '용량 표시: 파일 크기 합산을 MB 단위로 집계']} />
-          <HelpSection label="실제 버전" items={['Supabase Storage photos 버킷 (Public read)', '프론트 → Spring Boot → Supabase REST API 업로드', 'Public URL을 photos DB 테이블에 저장 후 그리드 렌더링', '업로드 시 확장자 검증 (jpg, png, webp, gif)']} />
+          <HelpSection label="업로드 흐름" items={[
+            '① 클라이언트 → Spring Boot POST /api/photos/upload (MultipartFile)',
+            '② 백엔드: Supabase Storage REST API PUT (Authorization: Bearer service-key)',
+            '③ Supabase photos 버킷에 저장 → Public URL 생성',
+            '④ photos 테이블: file_name, public_url, file_size, uploaded_at, uploaded_by',
+            '⑤ 클라이언트: Public URL을 img src에 직접 사용',
+          ]} />
+          <HelpSection label="레이아웃 구현" items={[
+            'CSS Grid grid-cols-2 sm:grid-cols-3 바둑판 그리드',
+            'aspect-square: 셀 항상 정사각형 유지',
+            'object-cover: 이미지가 셀을 꽉 채우도록',
+            '용량 표시: GET /api/photos/storage → 파일 크기 합산 MB',
+            '전체 한도: 1GB (Supabase 무료 플랜)',
+          ]} />
+          <HelpSection label="권한" items={[
+            'Supabase 버킷: Public read (비로그인도 이미지 URL 접근 가능)',
+            '업로드·삭제: 가족 JWT 인증 필요 (Spring Boot에서 검증)',
+            'Service Key는 Render 환경변수에만 보관',
+          ]} />
         </HelpModal>
       )}
     </div>

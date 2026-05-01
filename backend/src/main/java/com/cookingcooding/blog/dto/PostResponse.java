@@ -16,6 +16,7 @@ public class PostResponse {
     private final String excerpt;
     private final List<String> tags;
     private final String authorNickname;
+    private final String authorEmail;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
@@ -29,6 +30,7 @@ public class PostResponse {
                 ? Arrays.stream(post.getTags().split(",")).map(String::trim).filter(s -> !s.isBlank()).toList()
                 : List.of();
         this.authorNickname = post.getAuthor().getNickname();
+        this.authorEmail = post.getAuthor().getEmail();
         this.createdAt = post.getCreatedAt();
         this.updatedAt = post.getUpdatedAt();
     }

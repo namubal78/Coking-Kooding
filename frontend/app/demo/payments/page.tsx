@@ -96,9 +96,23 @@ export default function DemoPaymentsPage() {
 
       {helpOpen && (
         <HelpModal title="💳 결제 내역 — 구현 방식" onClose={() => setHelpOpen(false)}>
-          <HelpSection label="기술 스택" items={['PortOne V1 REST API (구 아임포트)', 'Spring Boot 프록시 — API Key 서버 보관', 'JPA — payments 테이블 (imp_uid, merchant_uid, amount, status)']} />
-          <HelpSection label="결제 검증 흐름" items={['① 프론트: PortOne SDK로 결제창 호출 → imp_uid 수신', '② 백엔드: imp_uid로 PortOne API 조회 → 금액 대조 검증', '③ 검증 통과 시 DB 저장 + 응답 반환']} />
-          <HelpSection label="현재 상태" items={['PortOne SDK 미연동 — UI 및 API 구조만 완성', '실제 결제 연동 시 프론트에 imp-cdn 스크립트 추가 필요']} />
+          <HelpSection label="결제 검증 흐름" items={[
+            '① 프론트: PortOne JS SDK → IMP.request_pay() 호출 → 결제창 표시',
+            '② 결제 완료 → imp_uid(결제 고유번호) 수신',
+            '③ 프론트 → 백엔드 POST /api/payments/verify { imp_uid, merchant_uid, amount }',
+            '④ 백엔드: PortOne REST API GET /payments/{imp_uid} 조회 (API 키 서버 보관)',
+            '⑤ 실제 결제 금액 vs 요청 금액 대조 검증 → 일치 시 DB 저장',
+          ]} />
+          <HelpSection label="DB 스키마" items={[
+            'payments: id, imp_uid, merchant_uid, amount, method, status, paid_at',
+            'status: PAID / CANCELLED / FAILED',
+          ]} />
+          <HelpSection label="현재 구현 상태" items={[
+            'Spring Boot 검증 API 및 DB 구조 완성 — 실제로 조회 가능',
+            'PortOne SDK 프론트 미연동 — 결제 버튼 UI만 구현됨',
+            '연동 시: <script src="iamport.js"> 추가 + IMP.init("가맹점코드")',
+            '보안: API 키는 절대 프론트 미노출, 금액은 서버에서 반드시 재검증',
+          ]} />
         </HelpModal>
       )}
     </div>

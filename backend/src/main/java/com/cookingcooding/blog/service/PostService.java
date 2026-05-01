@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -21,34 +22,47 @@ public class PostService {
 
     private static final String ADMIN_EMAIL = "namubal78@gmail.com";
     private static final String DRAFT_CATEGORY = "초안";
+    private static final String FAMILY_CATEGORY = "가족";
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public List<PostResponse> getAll() {
+        boolean loggedIn = !currentEmail().isEmpty();
         return postRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .filter(p -> !DRAFT_CATEGORY.equals(p.getCategory()) || isAdmin())
+                .filter(p -> !FAMILY_CATEGORY.equals(p.getCategory()) || loggedIn)
                 .map(PostResponse::new)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<PostResponse> getByCategory(String category) {
         if (DRAFT_CATEGORY.equals(category) && !isAdmin()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
+        }
+        if (FAMILY_CATEGORY.equals(category) && currentEmail().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
         }
         return postRepository.findByCategoryOrderByCreatedAtDesc(category)
                 .stream().map(PostResponse::new).toList();
     }
 
+    @Transactional(readOnly = true)
     public PostResponse getOne(Long id) {
         Post post = findById(id);
         if (DRAFT_CATEGORY.equals(post.getCategory()) && !isAdmin()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
         }
+        if (FAMILY_CATEGORY.equals(post.getCategory()) && currentEmail().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
         return new PostResponse(post);
     }
 
+    @Transactional
     public PostResponse create(PostRequest req) {
         User author = getCurrentUser();
         Post post = Post.builder()
@@ -62,6 +76,7 @@ public class PostService {
         return new PostResponse(postRepository.save(post));
     }
 
+    @Transactional
     public PostResponse update(Long id, PostRequest req) {
         Post post = findById(id);
         checkEditPermission(post);
@@ -73,6 +88,7 @@ public class PostService {
         return new PostResponse(postRepository.save(post));
     }
 
+    @Transactional
     public void delete(Long id) {
         Post post = findById(id);
         checkEditPermission(post);
