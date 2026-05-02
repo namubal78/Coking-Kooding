@@ -35,24 +35,19 @@ self.addEventListener('fetch', e => {
   )
 })
 
-// 웹 푸시 수신 → 알림 표시
-// 채팅 페이지에 포커스가 있을 때만 생략, 그 외(다른 페이지·백그라운드)는 항상 표시
+// 웹 푸시 수신 → 포그라운드·백그라운드 구분 없이 항상 알림 표시
 self.addEventListener('push', e => {
   let data = { title: 'CokingCooding', body: '새 메시지가 있습니다' }
   try { data = e.data?.json() ?? data } catch {}
 
   e.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      const chatFocused = list.some(c => c.focused && c.url.includes('/world/chat'))
-      if (chatFocused) return  // 채팅 화면 보는 중 → 알림 생략
-      return self.registration.showNotification(data.title, {
-        body: data.body,
-        icon: '/main.png',
-        badge: '/favicon.ico',
-        tag: 'chat-message',
-        renotify: true,
-        data: { url: '/world/chat' },
-      })
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/main.png',
+      badge: '/favicon.ico',
+      tag: 'chat-message',
+      renotify: true,
+      data: { url: '/world/chat' },
     })
   )
 })
