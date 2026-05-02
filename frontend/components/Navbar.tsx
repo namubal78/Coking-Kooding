@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getToken, parseJwt, getDisplayName } from '@/lib/api'
 
 const PUBLIC_LINKS = [
@@ -27,6 +27,8 @@ export default function Navbar() {
   const [displayName, setDisplayName] = useState('')
   const [loggedIn, setLoggedIn] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [worldOpen, setWorldOpen] = useState(false)
+  const worldRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const token = getToken()
@@ -36,8 +38,19 @@ export default function Navbar() {
     if (payload?.sub) setDisplayName(getDisplayName(payload.sub))
   }, [])
 
-  // 라우트 변경 시 모바일 메뉴 닫기
-  useEffect(() => { setMenuOpen(false) }, [pathname])
+  // 라우트 변경 시 메뉴 닫기
+  useEffect(() => { setMenuOpen(false); setWorldOpen(false) }, [pathname])
+
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (worldRef.current && !worldRef.current.contains(e.target as Node)) {
+        setWorldOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   function logout() {
     localStorage.removeItem('token')
@@ -78,12 +91,38 @@ export default function Navbar() {
             </Link>
           ))}
           {loggedIn ? (
-            <>
-              {displayName && <span className="text-sm text-gray-500">{displayName}</span>}
-              <button onClick={logout} className="text-sm text-gray-600 hover:text-red-400 transition-colors cursor-pointer">
-                로그아웃
+            <div className="relative" ref={worldRef}>
+              <button
+                onClick={() => setWorldOpen(w => !w)}
+                className="text-sm text-gray-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1"
+              >
+                {displayName}
+                <svg className={`w-3 h-3 transition-transform ${worldOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
-            </>
+              {worldOpen && (
+                <div className="absolute right-0 top-8 bg-gray-900 border border-gray-800 rounded-xl shadow-xl z-50 min-w-28 py-1.5 overflow-hidden">
+                  <p className="text-[10px] text-gray-700 uppercase tracking-widest font-semibold px-4 pt-1.5 pb-1">은새월드</p>
+                  {WORLD_LINKS.map(l => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className={`block px-4 py-2 text-sm transition-colors ${isActive(l.href) ? 'text-indigo-400' : 'text-gray-400 hover:text-white hover:bg-gray-800/60'}`}
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                  <div className="border-t border-gray-800 my-1" />
+                  <button
+                    onClick={logout}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-red-400 transition-colors cursor-pointer"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <Link
               href="/login"

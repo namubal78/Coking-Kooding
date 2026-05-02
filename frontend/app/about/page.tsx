@@ -11,7 +11,7 @@ export default function AboutPage() {
         <section>
           <p className="text-indigo-400 text-xs font-mono tracking-widest mb-3">@namubal78</p>
           <h1 className="text-4xl font-bold mb-1">한영섭</h1>
-          <p className="text-gray-500 text-sm font-mono mb-6">Han Youngsub · 4년 차 웹 개발자</p>
+          <p className="text-gray-500 text-sm font-mono mb-6">Han Youngseop · 4년 차 웹 개발자</p>
           <p className="text-gray-300 leading-relaxed text-base">
             기술로 서비스의 쾌적함을 설계하는 개발자입니다.
           </p>
@@ -98,7 +98,9 @@ export default function AboutPage() {
             <div>
               <div className="flex items-start justify-between gap-4 mb-2">
                 <div>
-                  <p className="text-white font-semibold text-sm">KB 국민은행</p>
+                  <p className="text-white font-semibold text-sm">KB 국민은행
+                    <span className="ml-2 text-[10px] font-normal text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded">비개발</span>
+                  </p>
                   <p className="text-gray-500 text-xs mt-0.5">리브모바일플랫폼단 · 주임</p>
                 </div>
                 <span className="text-indigo-400 text-xs font-mono shrink-0">2021.11 — 2022.03</span>
@@ -111,7 +113,9 @@ export default function AboutPage() {
             <div>
               <div className="flex items-start justify-between gap-4 mb-2">
                 <div>
-                  <p className="text-white font-semibold text-sm">KB 국민은행</p>
+                  <p className="text-white font-semibold text-sm">KB 국민은행
+                    <span className="ml-2 text-[10px] font-normal text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded">비개발</span>
+                  </p>
                   <p className="text-gray-500 text-xs mt-0.5">화곡동 지점 · 대리</p>
                 </div>
                 <span className="text-indigo-400 text-xs font-mono shrink-0">2018.12 — 2019.03</span>
@@ -133,29 +137,37 @@ export default function AboutPage() {
                 title: '온라인 임치시스템 기능개선',
                 org: '한국저작권위원회',
                 period: '2023.06 — 2025.10',
+                stack: ['Java/Spring', 'CUBRID'],
+                role: '레거시 아키텍처 재설계·쿼리 최적화·반응형 UI 도입으로 공공 시스템 성능 및 안정성 개선',
                 featured: true,
               },
               {
                 title: '규제자유특구 정보시스템 유지관리 용역',
                 org: '중소벤처기업부',
                 period: '2026.01 — 2026.03',
+                stack: ['Java/Spring', 'PostgreSQL'],
+                role: '인터뷰·벤치마킹 기반 목표 시스템 개념도·프로토타입 설계 (기획/설계 PL)',
                 featured: false,
               },
               {
                 title: '과학문화 확산을 위한 플랫폼 기획 및 운영지원 용역',
                 org: '한국과학창의재단',
                 period: '2025.04 — 2025.09',
+                stack: ['Java/Spring', 'PostgreSQL', 'HTML/JS'],
+                role: '특집 페이지 HTML 인터랙티브 컨텐츠 구현·퀴즈 이벤트·만족도 조사 기획 및 운영',
                 featured: false,
               },
               {
                 title: '전자의무기록시스템 인증포털 유지관리',
-                org: 'EMR 인증기관',
+                org: '한국보건의료정보원',
                 period: '2024.06 — 2024.08',
+                stack: ['Java/Spring', 'PostgreSQL'],
+                role: '설문 로직 통합·통계 시각화·암호화 참여 링크 구현으로 관리 효율성 개선',
                 featured: false,
               },
             ].map(p => (
               <div key={p.title} className={`bg-gray-900 border rounded-xl px-5 py-4 ${p.featured ? 'border-indigo-800/50' : 'border-gray-800'}`}>
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       {p.featured && (
@@ -163,9 +175,15 @@ export default function AboutPage() {
                       )}
                       <p className="text-white text-sm font-medium">{p.title}</p>
                     </div>
-                    <p className="text-gray-600 text-xs mt-1">{p.org}</p>
+                    <p className="text-gray-600 text-xs mt-0.5">{p.org}</p>
                   </div>
                   <span className="text-gray-600 text-xs font-mono shrink-0">{p.period}</span>
+                </div>
+                <p className="text-gray-500 text-xs mb-2">{p.role}</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {p.stack.map(s => (
+                    <span key={s} className="text-[10px] text-gray-600 bg-gray-800/60 px-2 py-0.5 rounded-full">{s}</span>
+                  ))}
                 </div>
               </div>
             ))}
@@ -176,30 +194,19 @@ export default function AboutPage() {
         <section>
           <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-widest mb-5">Side Projects</h2>
           <div className="space-y-3">
-            {[
-              { title: 'CokingCooding', desc: '풀스택 개인 프로젝트 — 블로그·플래너·가족 메신저·AI 일지 자동화', tag: '개인', href: '/home' },
-              { title: 'Flow-task', desc: '태스크·일정 관리 웹 애플리케이션', tag: '개인', href: null },
-              { title: 'AAP (All About Payments)', desc: '결제 흐름 통합 학습 팀 프로젝트', tag: '팀', href: null },
-              { title: 'Pill So Good', desc: 'KH정보교육원 Final 프로젝트 — 약 정보 플랫폼 (1등)', tag: '교육', href: null },
-            ].map(p => (
-              <div key={p.title} className="bg-gray-900 border border-gray-800 rounded-xl px-5 py-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-semibold text-gray-600 bg-gray-800 px-2 py-0.5 rounded-full">{p.tag}</span>
-                      {p.href ? (
-                        <Link href={p.href} className="text-white text-sm font-medium hover:text-indigo-400 transition-colors">
-                          {p.title} →
-                        </Link>
-                      ) : (
-                        <p className="text-white text-sm font-medium">{p.title}</p>
-                      )}
-                    </div>
-                    <p className="text-gray-500 text-xs mt-1">{p.desc}</p>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl px-5 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold text-gray-600 bg-gray-800 px-2 py-0.5 rounded-full">개인</span>
+                    <Link href="/home" className="text-white text-sm font-medium hover:text-indigo-400 transition-colors">
+                      CokingCooding →
+                    </Link>
                   </div>
+                  <p className="text-gray-500 text-xs mt-1">풀스택 개인 프로젝트 — 블로그·플래너·가족 메신저·AI 일지 자동화</p>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </section>
 
@@ -224,7 +231,10 @@ export default function AboutPage() {
 
           <div className="mt-6 flex gap-3 flex-wrap">
             <span className="text-xs text-gray-600 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg">
-              🏆 KH Final 팀프로젝트 1등 (2022)
+              TOEIC 850점 (2026.03.29)
+            </span>
+            <span className="text-xs text-gray-600 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg">
+              KH Final 팀프로젝트 1등 (2022)
             </span>
             <span className="text-xs text-gray-600 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg">
               이랜드 전략기획 인턴십 (2018)

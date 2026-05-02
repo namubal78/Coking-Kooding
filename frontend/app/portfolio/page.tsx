@@ -40,23 +40,6 @@ const PROJECTS = [
     wip: false,
   },
   {
-    title: 'AAP (결제 프로토타입)',
-    company: '개인 사이드 프로젝트',
-    period: '2026.01 — 진행 중',
-    stack: ['Java 17', 'Spring Boot 3', 'React 19', 'PostgreSQL', 'PortOne API'],
-    team: '1명',
-    service: 'PortOne 결제 API 연동 및 결제 사후 검증 흐름 학습용 풀스택 프로토타입',
-    achievements: [
-      {
-        title: '멱등성 보장으로 동일 주문번호 중복 결제 방지',
-        problem: '결제 완료 콜백이 네트워크 재시도·사용자 중복 클릭으로 동일 건 중복 도달. 동일 결제 건 저장 로직 두 번 실행 시 DB 중복 저장 및 중복 알림 발송 위험.',
-        solve: 'merchant_uid 기반 상태 선검증 방식 적용. 서비스 레벨(선검증) + DB 레벨(UNIQUE 제약) 이중 방어 구조.',
-        result: '동시 요청에도 중복 저장 방지',
-      },
-    ],
-    wip: true,
-  },
-  {
     title: 'Coking-Cooding',
     company: '개인 사이드 프로젝트',
     period: '2026.04 — 진행 중',
