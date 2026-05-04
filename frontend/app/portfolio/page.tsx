@@ -2,11 +2,10 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 
 const SKILLS = [
-  { category: 'Backend', items: ['Java', 'Spring Boot 3', 'Spring Security', 'JPA', 'JWT', 'OAuth2', 'REST API', 'ExecutorService'] },
-  { category: 'Frontend', items: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS', 'jQuery', 'JSP'] },
-  { category: 'Database', items: ['PostgreSQL', 'CUBRID', 'HikariCP', 'Supabase'] },
-  { category: 'DevOps', items: ['Docker', 'GitHub Actions', 'Render', 'GitHub Pages', 'SVN'] },
-  { category: 'AI / API', items: ['Anthropic Claude API', 'PortOne 결제 API', 'Webhook'] },
+  { category: 'Backend', items: ['Java', 'Spring Framework', 'Spring Boot 3', 'ExecutorService', 'FileChannel'] },
+  { category: 'Frontend', items: ['JSP', 'jQuery', 'HTML/CSS/JS'] },
+  { category: 'Database', items: ['CUBRID', 'PostgreSQL'] },
+  { category: 'DevOps', items: ['SVN', 'Git'] },
 ]
 
 const PROJECTS = [

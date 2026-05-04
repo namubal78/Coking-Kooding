@@ -5,6 +5,7 @@ import com.cookingcooding.photos.entity.Photo;
 import com.cookingcooding.photos.repository.PhotoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -68,8 +70,31 @@ public class PhotoService {
     }
 
     public long getStorageUsed() {
-        Long used = photoRepository.sumFileSize();
-        return used != null ? used : 0L;
+        try {
+            String listUrl = supabaseUrl + "/storage/v1/object/list/" + bucket;
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + serviceKey);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String body = "{\"prefix\":\"\",\"limit\":1000,\"offset\":0}";
+            ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+                    listUrl, HttpMethod.POST,
+                    new HttpEntity<>(body, headers),
+                    new ParameterizedTypeReference<>() {}
+            );
+            List<Map<String, Object>> objects = response.getBody();
+            if (objects == null) return 0L;
+            return objects.stream().mapToLong(obj -> {
+                Object meta = obj.get("metadata");
+                if (meta instanceof Map<?, ?> m) {
+                    Object size = m.get("size");
+                    if (size instanceof Number n) return n.longValue();
+                }
+                return 0L;
+            }).sum();
+        } catch (Exception e) {
+            Long used = photoRepository.sumFileSize();
+            return used != null ? used : 0L;
+        }
     }
 
     public void delete(Long id) {

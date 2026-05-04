@@ -804,45 +804,25 @@ export default function WorkoutPage() {
           )}
 
           {/* 날짜별 세부 통계 */}
-          {selectedStatDate && detailStats.length > 0 && (
-            <div className="mt-4 bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-              <p className="text-xs text-gray-500 font-medium">{selectedStatDate} 세부</p>
-              {detailStats.map(s => {
-                const rate = Math.round(s.completionRate)
-                return (
-                  <div key={s.exerciseId} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-white">{s.name}</span>
-                      <span className={`text-xs font-mono font-bold ${rate >= 100 ? 'text-emerald-400' : rate > 0 ? 'text-indigo-400' : 'text-gray-600'}`}>
-                        {s.completedSets}/{s.totalSets}세트
-                      </span>
-                    </div>
-                    {/* 세트 시각화 */}
-                    <div className="flex gap-1 flex-wrap">
-                      {Array.from({ length: s.totalSets }, (_, i) => (
-                        <div
-                          key={i}
-                          className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold
-                            ${i < s.completedSets
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-gray-800 text-gray-600'
-                            }`}
-                        >
-                          {i + 1}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${rate >= 100 ? 'bg-emerald-500' : 'bg-indigo-500'}`}
-                        style={{ width: `${rate}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          {selectedStatDate && detailStats.length > 0 && (() => {
+            const done = detailStats.filter(s => s.completedSets > 0)
+            const avgRate = Math.round(detailStats.reduce((acc, s) => acc + s.completionRate, 0) / detailStats.length)
+            return (
+              <div className="mt-4 bg-gray-900 border border-gray-800 rounded-xl p-4">
+                <p className="text-xs text-gray-500 font-medium mb-2">{selectedStatDate}</p>
+                {done.length > 0 ? (
+                  <p className="text-sm text-white leading-relaxed">
+                    {done.map(s => `${s.name} ${s.completedSets}회`).join(' · ')}
+                    <span className={`font-semibold ml-2 ${avgRate >= 100 ? 'text-emerald-400' : 'text-indigo-400'}`}>
+                      {' '}→ 총 {avgRate}%
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-gray-600 text-sm">운동 기록 없음</p>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </main>
     </div>
