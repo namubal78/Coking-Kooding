@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,17 +34,12 @@ public class WorkoutService {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${anthropic.api-key:}")
-    private String apiKey;
-
     @Value("${supabase.url:}")
     private String supabaseUrl;
 
     @Value("${supabase.service-key:}")
     private String serviceKey;
 
-    private static final String ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-    private static final String MODEL = "claude-haiku-4-5-20251001";
     private static final String VIDEO_BUCKET = "workout-videos";
 
     // ── Auth helpers ──────────────────────────────────────────────────
@@ -217,48 +210,7 @@ public class WorkoutService {
     // ── Voice ─────────────────────────────────────────────────────────
 
     public String parseVoice(String text, List<String> exerciseNames) {
-        if (exerciseNames.isEmpty()) return "";
-        String nameList = String.join(", ", exerciseNames);
-        String prompt = """
-                운동 목록: [%s]
-                음성: "%s"
-
-                어떤 운동을 했다고 말했는지 JSON으로만 반환해줘. 설명 없이 JSON만.
-                일치하는 운동이 있으면: {"exerciseName":"운동이름"}
-                없으면: {"exerciseName":""}
-
-                규칙:
-                - exerciseName은 운동 목록에 있는 이름 그대로
-                - "한 세트", "1세트", "했어", "완료", "체크" 등 표현 모두 인식
-                - 운동 이름이 비슷하면 가장 가까운 것 선택
-                """.formatted(nameList, text);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-api-key", apiKey);
-        headers.set("anthropic-version", "2023-06-01");
-
-        Map<String, Object> body = Map.of(
-                "model", MODEL,
-                "max_tokens", 64,
-                "messages", List.of(Map.of("role", "user", "content", prompt))
-        );
-
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restTemplate.postForObject(
-                    ANTHROPIC_URL, new HttpEntity<>(body, headers), Map.class);
-            if (response == null) return "";
-
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> content = (List<Map<String, Object>>) response.get("content");
-            String responseText = content.get(0).get("text").toString().trim();
-
-            Matcher m = Pattern.compile("\"exerciseName\"\\s*:\\s*\"([^\"]*)\"").matcher(responseText);
-            return m.find() ? m.group(1) : "";
-        } catch (Exception e) {
-            return "";
-        }
+        return "";
     }
 
     // ── Helpers ───────────────────────────────────────────────────────

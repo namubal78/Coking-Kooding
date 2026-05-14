@@ -37,11 +37,7 @@ public class DevLogController {
             @RequestHeader(value = "X-Webhook-Secret", required = false) String secret,
             @RequestBody DevLogWebhookRequest req
     ) {
-        if (webhookSecret.isBlank() || !webhookSecret.equals(secret)) {
-            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-        }
-        devLogService.receiveCommit(req);
-        return ResponseEntity.ok(Map.of("status", "ok"));
+        return ResponseEntity.status(503).body(Map.of("error", "개발 일지 자동 생성이 일시 중단되었습니다."));
     }
 
     @PutMapping("/{id}")

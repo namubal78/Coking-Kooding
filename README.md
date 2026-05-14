@@ -17,7 +17,7 @@
 | Storage | Supabase Storage |
 | Realtime | WebSocket · STOMP · SockJS |
 | Push | Web Push VAPID · Service Worker |
-| AI | Anthropic Claude Haiku 4.5 API |
+| AI | ~~Anthropic Claude Haiku 4.5 API~~ (일시 비활성화) |
 | CI/CD | GitHub Actions → Docker (ghcr.io) → Render / GitHub Pages |
 
 ---
@@ -36,7 +36,7 @@ GitHub Push
     ├─ deploy-frontend.yml
     │       └─ Next.js static export → GitHub Pages
     │
-    └─ dev-log.yml
+    └─ dev-log.yml (일시 비활성화)
             └─ 2분 대기 → 백엔드 웹훅 → Claude Haiku API 요약
                        → dev_logs 테이블 upsert → Slack 알림
 ```
@@ -79,7 +79,9 @@ datasource:
 - `message_reads` 테이블: 사용자별 `lastReadId` 저장 → 읽음 처리 즉시 반영
 - Web Push VAPID로 앱 포그라운드/백그라운드 푸시 알림
 
-### 4. AI 자동 개발 일지 파이프라인
+### 4. AI 자동 개발 일지 파이프라인 (일시 비활성화)
+
+> 운영 비용 절감을 위해 현재 비활성화 상태입니다.
 
 ```
 GitHub Push
@@ -172,7 +174,7 @@ npm ci && next build (static export)
 → GitHub Pages (gh-pages branch)
 ```
 
-### `dev-log.yml` — 모든 main push
+### `dev-log.yml` — 일시 비활성화 (수동 실행만 가능)
 
 ```
 120초 대기 (Render 재시작 완료 대기)

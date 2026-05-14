@@ -1,8 +1,7 @@
 name: Dev Log
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   log:
