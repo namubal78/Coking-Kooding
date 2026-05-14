@@ -472,10 +472,9 @@ export default function WorkoutPage() {
             </div>
 
             <button
-              onClick={toggleMic}
-              title={micOn ? '마이크 끄기' : '상시 음성인식 켜기'}
-              className={`w-10 h-10 flex items-center justify-center rounded-full border transition-all cursor-pointer text-lg
-                ${micOn ? 'bg-red-600 border-red-500 animate-pulse' : 'border-gray-700 hover:bg-gray-800 text-gray-400'}`}
+              disabled
+              title="AI 음성 기능 일시 중단"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-800 text-gray-600 cursor-not-allowed opacity-40 text-lg"
             >🎤</button>
             <button
               onClick={() => setShowAddForm(v => !v)}

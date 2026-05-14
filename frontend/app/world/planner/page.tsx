@@ -257,9 +257,9 @@ export default function PlannerPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={listening ? stopVoice : startVoice}
-              title="음성으로 일정 추가"
-              className={`w-9 h-9 flex items-center justify-center rounded-full border transition-all cursor-pointer ${listening ? 'bg-red-600 border-red-500 animate-pulse' : 'border-gray-700 hover:bg-gray-800 text-gray-400'}`}
+              disabled
+              title="AI 음성 기능 일시 중단"
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-800 text-gray-600 cursor-not-allowed opacity-40"
             >
               🎤
             </button>
